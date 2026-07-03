@@ -1,0 +1,94 @@
+import { type ReactNode } from 'react'
+import { NavLink } from 'react-router-dom'
+import { Home, Search, History, Heart, Settings, Tv } from 'lucide-react'
+import { SearchBar } from './SearchBar'
+
+const NAV = [
+  { to: '/', icon: Home, label: '首页' },
+  { to: '/search', icon: Search, label: '搜索' },
+  { to: '/favorites', icon: Heart, label: '收藏' },
+  { to: '/history', icon: History, label: '历史' },
+  { to: '/sources', icon: Settings, label: '片源管理' },
+]
+
+export function AppShell({ children, hideNav }: { children: ReactNode; hideNav?: boolean }) {
+  if (hideNav) {
+    return <main className="min-h-screen bg-bg">{children}</main>
+  }
+
+  return (
+    <div className="min-h-screen bg-bg">
+      {/* ─── Navbar — KVideo-style floating glass pill ─── */}
+      <nav className="sticky top-0 z-[2000] pt-3 pb-1" style={{ transform: 'translate3d(0,0,0)', willChange: 'transform' }}>
+        <div className="max-w-7xl mx-auto px-3 sm:px-6">
+          <div className="glass-card px-3 sm:px-5 py-2 flex items-center justify-between gap-2">
+            {/* Logo */}
+            <NavLink to="/" className="flex items-center gap-2 sm:gap-3 hover:opacity-80 transition-opacity flex-shrink-0">
+              <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-accent/15 border border-accent/20 flex items-center justify-center">
+                <Tv size={16} className="text-accent sm:w-[18px] sm:h-[18px]" />
+              </div>
+              <div className="hidden sm:flex flex-col">
+                <span className="text-base font-bold text-ink leading-tight">Super Video</span>
+                <span className="text-[10px] text-muted leading-tight">影视聚合搜索</span>
+              </div>
+            </NavLink>
+
+            {/* Desktop nav links */}
+            <div className="hidden md:flex items-center gap-1">
+              {NAV.map(({ to, icon: Icon, label }) => (
+                <NavLink
+                  key={to}
+                  to={to}
+                  end={to === '/'}
+                  className={({ isActive }) =>
+                    `flex items-center gap-1.5 px-3 py-1.5 rounded-pill text-[12px] font-medium transition-all duration-200
+                    ${isActive
+                      ? 'bg-accent/15 text-accent border border-accent/25'
+                      : 'text-muted hover:text-ink border border-transparent hover:bg-white/[0.04]'
+                    }`
+                  }
+                >
+                  <Icon size={14} strokeWidth={1.5} />
+                  {label}
+                </NavLink>
+              ))}
+            </div>
+
+            {/* Search + mobile nav */}
+            <div className="flex items-center gap-2">
+              <div className="w-[200px] sm:w-[280px] hidden sm:block">
+                <SearchBar compact />
+              </div>
+              {/* Mobile nav icons */}
+              <div className="flex md:hidden items-center gap-0.5">
+                {NAV.filter(n => n.to === '/' || n.to === '/search' || n.to === '/favorites').map(({ to, icon: Icon, label }) => (
+                  <NavLink
+                    key={to}
+                    to={to}
+                    end={to === '/'}
+                    className={({ isActive }) =>
+                      `icon-btn w-8 h-8 ${isActive ? '!text-accent !bg-accent/10 !border-accent/25' : ''}`
+                    }
+                    title={label}
+                  >
+                    <Icon size={14} strokeWidth={1.5} />
+                  </NavLink>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      </nav>
+
+      {/* Mobile search bar below navbar */}
+      <div className="sm:hidden px-3 pb-1 sticky top-[52px] z-[1999]">
+        <SearchBar compact />
+      </div>
+
+      {/* ─── Page content ─── */}
+      <main className="px-3 sm:px-6 py-3 sm:py-5">
+        {children}
+      </main>
+    </div>
+  )
+}

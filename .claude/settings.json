@@ -1,0 +1,24 @@
+{
+  "permissions": {
+    "allow": [
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "Read(//d/OneDrive/Desktop/TTTTV-Flutter/**)",
+      "Read(//d/OneDrive/Desktop/TTTTV-Flutter/ttttv_flutter/lib/**)",
+      "Bash(/d/environment/node.js/node.exe \"/d/environment/node.js/node_modules/npm/bin/npm-cli.js\" run dev)",
+      "Bash(/d/environment/node.js/node.exe \"./node_modules/typescript/bin/tsc\" --noEmit)",
+      "Bash(/d/environment/node.js/node.exe \"/d/environment/node.js/node_modules/npm/bin/npm-cli.js\" install hls.js)",
+      "Bash(/d/environment/node.js/node.exe \"./node_modules/vite/bin/vite.js\" build)",
+      "Bash(/d/environment/node.js/node.exe \"./server/proxy.mjs\")",
+      "Bash(/d/environment/node.js/node.exe -e ' *)",
+      "Bash(taskkill //PID 35632 //F)",
+      "Bash(taskkill //PID 23204 //F)",
+      "Bash(/d/environment/node.js/node.exe \"./node_modules/vite/bin/vite.js\")",
+      "Bash(curl -s \"http://localhost:5173/api/proxy?url=https%3A%2F%2Fhttpbin.org%2Fip\")",
+      "Bash(cmd.exe //c \"netstat -ano | findstr /C::5173 | findstr LISTENING\")",
+      "Bash(taskkill //F //PID 10880)",
+      "Bash(curl -s \"http://localhost:5173/api/proxy?url=https%3A%2F%2Fhttpbin.org%2Fanything%2Ftest.m3u8\")",
+      "Bash(taskkill //F //PID 6196)",
+      "Bash(taskkill //F //PID 23380)"
+    ]
+  }
+}

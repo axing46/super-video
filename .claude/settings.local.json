@@ -1,0 +1,23 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm create *)",
+      "Bash(/d/environment/node.js/node.exe *)",
+      "Bash(cmd.exe //c \"netstat -ano | findstr :3456\")",
+      "Bash(taskkill //PID 35468 //F)",
+      "Bash(taskkill //F //PID 6928)",
+      "Bash(taskkill //F //PID 4132)",
+      "Bash(unzip -l \"D:\\\\OneDrive\\\\Desktop\\\\4ec10-main/豆瓣电影数据集12万+用户影评40万+爬虫程序\\(可做推荐系统\\).zip\")",
+      "Bash(unzip -oq \"D:\\\\OneDrive\\\\Desktop\\\\4ec10-main/豆瓣电影数据集12万+用户影评40万+爬虫程序\\(可做推荐系统\\).zip\" \"豆瓣电影数据集12万+用户影评40万+爬虫程序\\(可做推荐系统\\)/豆瓣电影数据集+用户影评+爬虫程序.zip\" -d /tmp/douban_extract)",
+      "Read(//tmp/douban_extract/**)",
+      "Bash(unzip -oq \"豆瓣电影数据集+用户影评+爬虫程序.zip\" -d /tmp/douban_content)",
+      "Read(//tmp/**)",
+      "Bash(grep -viE \"zip$|jpeg$|\\\\.DS_Store|__MACOSX|\\\\.db$|\\\\.csv$\")",
+      "Bash(unzip -l \"D:/OneDrive/Desktop/4ec10-main/豆瓣电影数据集12万+用户影评40万+爬虫程序\\(可做推荐系统\\).zip\")",
+      "Bash(unzip -o \"D:/OneDrive/Desktop/4ec10-main/豆瓣电影数据集12万+用户影评40万+爬虫程序\\(可做推荐系统\\).zip\" -d ./temp_data/)",
+      "Bash(unzip -o \"./temp_data/豆瓣电影数据集12万+用户影评40万+爬虫程序\\(可做推荐系统\\)/豆瓣电影数据集+用户影评+爬虫程序.zip\" -d ./temp_data/extracted/)",
+      "Bash(taskkill //F //PID 5724)",
+      "Bash(taskkill //F //PID 27212)"
+    ]
+  }
+}
