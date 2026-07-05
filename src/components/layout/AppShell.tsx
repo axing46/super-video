@@ -1,6 +1,6 @@
-import { type ReactNode } from 'react'
+import { type ReactNode, useState } from 'react'
 import { NavLink } from 'react-router-dom'
-import { Home, Search, History, Heart, Settings, Tv } from 'lucide-react'
+import { Home, Search, History, Heart, Settings, Tv, Menu, X } from 'lucide-react'
 import { SearchBar } from './SearchBar'
 
 const NAV = [
@@ -12,6 +12,8 @@ const NAV = [
 ]
 
 export function AppShell({ children, hideNav }: { children: ReactNode; hideNav?: boolean }) {
+  const [drawerOpen, setDrawerOpen] = useState(false)
+
   if (hideNav) {
     return <main className="min-h-screen bg-bg">{children}</main>
   }
@@ -74,6 +76,14 @@ export function AppShell({ children, hideNav }: { children: ReactNode; hideNav?:
                     <Icon size={14} strokeWidth={1.5} />
                   </NavLink>
                 ))}
+                {/* Menu button for more options */}
+                <button
+                  onClick={() => setDrawerOpen(true)}
+                  className="icon-btn w-8 h-8"
+                  title="更多"
+                >
+                  <Menu size={14} strokeWidth={1.5} />
+                </button>
               </div>
             </div>
           </div>
@@ -89,6 +99,49 @@ export function AppShell({ children, hideNav }: { children: ReactNode; hideNav?:
       <main className="px-3 sm:px-6 py-3 sm:py-5">
         {children}
       </main>
+
+      {/* Mobile drawer menu */}
+      {drawerOpen && (
+        <div className="fixed inset-0 z-[3000] md:hidden">
+          {/* Backdrop */}
+          <div
+            className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+            onClick={() => setDrawerOpen(false)}
+          />
+          {/* Drawer */}
+          <div className="absolute right-0 top-0 bottom-0 w-64 bg-bg/95 backdrop-blur-md border-l border-white/10 animate-slide-in">
+            <div className="flex items-center justify-between px-4 py-4 border-b border-white/10">
+              <span className="text-[14px] font-semibold text-ink">菜单</span>
+              <button
+                onClick={() => setDrawerOpen(false)}
+                className="p-2 rounded-full hover:bg-white/10 text-muted hover:text-ink transition-all"
+              >
+                <X size={18} />
+              </button>
+            </div>
+            <nav className="p-4 space-y-1">
+              {NAV.map(({ to, icon: Icon, label }) => (
+                <NavLink
+                  key={to}
+                  to={to}
+                  end={to === '/'}
+                  onClick={() => setDrawerOpen(false)}
+                  className={({ isActive }) =>
+                    `flex items-center gap-3 px-4 py-3 rounded-xl text-[14px] font-medium transition-all duration-200
+                    ${isActive
+                      ? 'bg-accent/15 text-accent'
+                      : 'text-muted hover:text-ink hover:bg-white/[0.04]'
+                    }`
+                  }
+                >
+                  <Icon size={18} strokeWidth={1.5} />
+                  {label}
+                </NavLink>
+              ))}
+            </nav>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
