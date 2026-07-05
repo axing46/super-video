@@ -6,6 +6,12 @@ const STORAGE_KEY = 'sv_sources_v1'
 const SOURCES_VERSION_KEY = 'sv_sources_version'
 const CURRENT_SOURCES_VERSION = 3 // 更新版本号来触发同步
 
+// CORS proxies to try (in order) when fetching from browser
+const CORS_PROXIES = [
+  (url: string) => `https://corsproxy.io/?${encodeURIComponent(url)}`,
+  (url: string) => `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
+]
+
 // 38个默认片源配置（来自kvideo-settings）
 const DEFAULT_SOURCES: LocalVodSource[] = [
   { key: 'feifan', name: '非凡资源', apiUrl: 'http://ffzy5.tv/api.php/provide/vod', detailUrl: 'http://ffzy5.tv/api.php/provide/vod', enabled: true },
