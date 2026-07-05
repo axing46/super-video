@@ -22,7 +22,8 @@
       "Bash(git remote *)",
       "Bash(git push *)",
       "Bash(git config *)",
-      "Bash(git -c http.proxy= -c https.proxy= push)"
+      "Bash(git -c http.proxy= -c https.proxy= push)",
+      "Bash(git commit *)"
     ]
   }
 }
