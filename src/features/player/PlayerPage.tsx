@@ -460,7 +460,7 @@ function VideoPlayer({
           <AlertTriangle size={32} strokeWidth={1.5} className="text-amber-400" />
           <p className="text-[13px] text-white/80 text-center max-w-[400px]">{playerError}</p>
           <p className="text-[11px] text-muted text-center max-w-[400px]">
-            浏览器直接播放第三方视频源受 CORS 跨域和防盗链限制。TTTTV-Flutter 使用本地代理绕过此限制，Web 版暂无此能力。
+            该视频源播放失败，可能是跨域或防盗链限制。请尝试切换其他片源播放。
           </p>
           <div className="flex gap-3 mt-2">
             <a
