@@ -25,9 +25,13 @@ export function SourcesPage() {
   const [addName, setAddName] = useState('')
   const [addApi, setAddApi] = useState('')
 
-  const filteredSources = sources.filter((s) =>
-    !filter || s.name.toLowerCase().includes(filter.toLowerCase()) || s.key.toLowerCase().includes(filter.toLowerCase())
-  )
+  const filteredSources = sources
+    .filter((s) => !filter || s.name.toLowerCase().includes(filter.toLowerCase()) || s.key.toLowerCase().includes(filter.toLowerCase()))
+    .sort((a, b) => {
+      const aFav = favoriteKeys.includes(a.key) ? 0 : 1
+      const bFav = favoriteKeys.includes(b.key) ? 0 : 1
+      return aFav - bFav
+    })
 
   const enabledCount = sources.filter((s) => s.enabled).length
 
