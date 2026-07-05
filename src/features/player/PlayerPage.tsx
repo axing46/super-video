@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, useCallback } from 'react'
 import { useParams, useSearchParams, useNavigate } from 'react-router-dom'
-import { ArrowLeft, Play, Pause, Maximize, Minimize, SkipBack, SkipForward, Volume2, VolumeX, AlertTriangle, ExternalLink, Gauge } from 'lucide-react'
+import { ArrowLeft, Play, Pause, Maximize, Minimize, SkipBack, SkipForward, Volume2, VolumeX, AlertTriangle, ExternalLink, Gauge, ChevronLeft, ChevronRight } from 'lucide-react'
 import Hls from 'hls.js'
 import { useDetail } from '@/features/detail/hooks'
 import { parsePlayUrl } from '@/features/detail/api'
