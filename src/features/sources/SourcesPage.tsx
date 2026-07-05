@@ -1,6 +1,7 @@
 import { useState, useRef } from 'react'
-import { Plus, Download, ClipboardPaste, Trash2, ChevronUp, ChevronDown, Search, AlertTriangle, FileUp } from 'lucide-react'
+import { Plus, Download, ClipboardPaste, Trash2, ChevronUp, ChevronDown, Search, AlertTriangle, FileUp, Star } from 'lucide-react'
 import { useSources } from './hooks'
+import { getFavoriteSourceKeys, addFavoriteSource, removeFavoriteSource, isFavoriteSource } from './favorites'
 import type { LocalVodSource } from '@/core/models'
 import { getSourceDisplayName } from '@/utils/source-names'
 import { Loading, EmptyState } from '@/components/ui/Status'
@@ -10,6 +11,7 @@ const DEFAULT_REMOTE_URL = 'https://raw.githubusercontent.com/WEP-56/TTTTV-confi
 export function SourcesPage() {
   const { sources, isLoading, toggle, remove, clearAll, importSources, importSourcesFromJson, addSource } = useSources()
   const [showClearConfirm, setShowClearConfirm] = useState(false)
+  const [favoriteKeys, setFavoriteKeys] = useState<string[]>(getFavoriteSourceKeys())
   const [importMode, setImportMode] = useState<'url' | 'paste' | 'file' | 'add'>('url')
   const [importUrl, setImportUrl] = useState(DEFAULT_REMOTE_URL)
   const [pasteText, setPasteText] = useState('')
@@ -229,8 +231,18 @@ export function SourcesPage() {
               source={source}
               index={idx}
               total={filteredSources.length}
+              isFavorite={favoriteKeys.includes(source.key)}
               onToggle={() => toggle(source.key, !source.enabled)}
               onRemove={() => remove(source.key)}
+              onToggleFavorite={() => {
+                if (favoriteKeys.includes(source.key)) {
+                  removeFavoriteSource(source.key)
+                  setFavoriteKeys(getFavoriteSourceKeys())
+                } else {
+                  addFavoriteSource(source.key)
+                  setFavoriteKeys(getFavoriteSourceKeys())
+                }
+              }}
             />
           ))}
         </div>
@@ -278,14 +290,16 @@ export function SourcesPage() {
 // ─── Single source item ─────────────────────────────────────
 
 function SourceItem({
-  source, index, total,
-  onToggle, onRemove,
+  source, index, total, isFavorite,
+  onToggle, onRemove, onToggleFavorite,
 }: {
   source: LocalVodSource
   index: number
   total: number
+  isFavorite: boolean
   onToggle: () => void
   onRemove: () => void
+  onToggleFavorite: () => void
 }) {
   const displayName = getSourceDisplayName(source.key)
 
@@ -317,13 +331,27 @@ function SourceItem({
           </div>
         </div>
 
-        {/* Delete */}
-        <button onClick={onRemove}
-          className="w-8 h-8 flex items-center justify-center rounded-full bg-white/[0.04] border border-hair
-          text-muted hover:text-red-400 hover:border-red-400/20 transition-all duration-200"
-          aria-label="删除">
-          <Trash2 size={13} strokeWidth={1.5} />
-        </button>
+        <div className="flex items-center gap-1">
+          {/* Favorite star */}
+          <button onClick={onToggleFavorite}
+            className={`w-8 h-8 flex items-center justify-center rounded-full transition-all duration-200
+              ${isFavorite
+                ? 'text-amber-400 hover:text-amber-300'
+                : 'text-muted/40 hover:text-amber-400'
+              }`}
+            aria-label={isFavorite ? '取消常用' : '设为常用'}
+          >
+            <Star size={14} fill={isFavorite ? 'currentColor' : 'none'} />
+          </button>
+
+          {/* Delete */}
+          <button onClick={onRemove}
+            className="w-8 h-8 flex items-center justify-center rounded-full bg-white/[0.04] border border-hair
+            text-muted hover:text-red-400 hover:border-red-400/20 transition-all duration-200"
+            aria-label="删除">
+            <Trash2 size={13} strokeWidth={1.5} />
+          </button>
+        </div>
       </div>
     </div>
   )

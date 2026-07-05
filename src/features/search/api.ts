@@ -1,6 +1,7 @@
 import { fetchSourceApi } from '@/core/network/client'
 import type { VodItem } from '@/core/models'
 import { loadAllSources, type LocalVodSource } from '@/features/sources/storage'
+import { getFavoriteSourceKeys } from '@/features/sources/favorites'
 
 // ─── Source performance tracking ─────────────────────────────
 
@@ -177,17 +178,112 @@ export interface SearchAllResult {
   errorCount: number
 }
 
+// Calculate relevance score for search results
+function calculateRelevance(item: VodItem, keyword: string): number {
+  const name = (item.vodName || '').toLowerCase().trim()
+  const keywordLower = keyword.toLowerCase()
+
+  if (!name || !keywordLower) return 0
+
+  // Exact match = highest score
+  if (name === keywordLower) return 100
+
+  // Starts with keyword
+  if (name.startsWith(keywordLower)) return 80
+
+  // Contains keyword
+  if (name.includes(keywordLower)) return 60
+
+  // Check word-by-word match
+  const words = keywordLower.split(/\s+/)
+  const matchedWords = words.filter(w => name.includes(w))
+  if (matchedWords.length > 0) {
+    return (matchedWords.length / words.length) * 50
+  }
+
+  // Check if name contains any part of keyword
+  const nameWords = name.split(/[\s\-_,，。·：:]+/)
+  const nameMatch = nameWords.some(nw => nw.includes(keywordLower) || keywordLower.includes(nw))
+  if (nameMatch) return 30
+
+  return 0
+}
+
+// Group similar items across sources and rank them
+function groupAndRankItems(items: VodItem[], keyword: string): VodItem[] {
+  // Add relevance scores
+  const scoredItems = items.map(item => ({
+    ...item,
+    _relevance: calculateRelevance(item, keyword)
+  })).filter(item => item._relevance > 0) // Only keep relevant results
+
+  // Group by similar name
+  const groups = new Map<string, typeof scoredItems>()
+
+  for (const item of scoredItems) {
+    const normalizedName = normalizeForGrouping(item.vodName || '')
+    if (!groups.has(normalizedName)) {
+      groups.set(normalizedName, [])
+    }
+    groups.get(normalizedName)!.push(item)
+  }
+
+  // Convert to array with group boosting
+  const result: (VodItem & { _groupScore: number })[] = []
+
+  for (const [, group] of groups) {
+    // Count unique sources in group
+    const uniqueSources = new Set(group.map(g => g.sourceKey)).size
+
+    // Sort group by relevance (highest first)
+    group.sort((a, b) => (b._relevance || 0) - (a._relevance || 0))
+
+    // Add group score boost for items found in multiple sources
+    const groupBoost = uniqueSources > 1 ? 20 : 0
+
+    for (const item of group) {
+      result.push({
+        ...item,
+        _groupScore: (item._relevance || 0) + groupBoost
+      })
+    }
+  }
+
+  // Sort by group score (highest first)
+  result.sort((a, b) => (b._groupScore || 0) - (a._groupScore || 0))
+
+  // Remove helper fields
+  return result.map(({ _relevance, _groupScore, ...rest }) => rest)
+}
+
+// Normalize name for grouping
+function normalizeForGrouping(name: string): string {
+  return name
+    .replace(/\s+/g, '')
+    .replace(/[第季集期部]/g, '')
+    .replace(/\d+$/g, '')
+    .replace(/[^a-zA-Z0-9一-鿿]/g, '')
+    .toLowerCase()
+}
+
 export async function searchAllSources(
   keyword: string,
   cache: SearchCache,
   onBatch?: (items: VodItem[]) => void,
   fastOnly = false,
+  favoritesOnly = false,
 ): Promise<SearchAllResult> {
   const query = keyword.trim()
   if (!query) return { items: [], sourceCount: 0, errorCount: 0 }
 
   let sources = (await loadAllSources()).filter((s) => s.enabled)
   if (sources.length === 0) return { items: [], sourceCount: 0, errorCount: 0 }
+
+  // Filter to favorites only if requested
+  if (favoritesOnly) {
+    const favoriteKeys = getFavoriteSourceKeys()
+    sources = sources.filter(s => favoriteKeys.includes(s.key))
+  }
 
   // Sort by performance (smart source sorting)
   sources = sortSourcesByPerformance(sources)
@@ -251,7 +347,10 @@ export async function searchAllSources(
     }
   }
 
-  return { items: allItems, sourceCount: sources.length, errorCount }
+  // Group and rank results by relevance
+  const rankedItems = groupAndRankItems(allItems, query)
+
+  return { items: rankedItems, sourceCount: sources.length, errorCount }
 }
 
 // ─── Get detail ──────────────────────────────────────────────

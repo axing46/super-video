@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { searchAllSources, SearchCache, type SearchAllResult } from './api'
 import { useDebounce } from '@/hooks/useDebounce'
@@ -7,9 +7,9 @@ const searchCache = new SearchCache()
 const SESSION_KEY_PREFIX = 'sv_search_'
 
 /** Read cached results from sessionStorage */
-function getSessionCache(query: string): SearchAllResult | null {
+function getSessionCache(query: string, favoritesOnly: boolean): SearchAllResult | null {
   try {
-    const raw = sessionStorage.getItem(SESSION_KEY_PREFIX + query)
+    const raw = sessionStorage.getItem(SESSION_KEY_PREFIX + query + (favoritesOnly ? '_fav' : ''))
     return raw ? JSON.parse(raw) : null
   } catch {
     return null
@@ -17,14 +17,14 @@ function getSessionCache(query: string): SearchAllResult | null {
 }
 
 /** Write results to sessionStorage */
-function setSessionCache(query: string, result: SearchAllResult) {
+function setSessionCache(query: string, result: SearchAllResult, favoritesOnly: boolean) {
   try {
-    sessionStorage.setItem(SESSION_KEY_PREFIX + query, JSON.stringify(result))
+    sessionStorage.setItem(SESSION_KEY_PREFIX + query + (favoritesOnly ? '_fav' : ''), JSON.stringify(result))
   } catch { /* quota exceeded */ }
 }
 
-export function useSearch(keyword: string) {
-  const debounced = useDebounce(keyword, 200) // Faster: 200ms
+export function useSearch(keyword: string, favoritesOnly = false) {
+  const debounced = useDebounce(keyword, 200)
   const queryClient = useQueryClient()
   const [streamingItems, setStreamingItems] = useState<SearchAllResult | null>(null)
   const [isStreaming, setIsStreaming] = useState(false)
@@ -53,29 +53,30 @@ export function useSearch(keyword: string) {
           }))
         },
         true, // fastOnly mode for initial results
+        favoritesOnly,
       )
       if (!cancelled) setIsStreaming(false)
     }
 
     streamSearch()
     return () => { cancelled = true }
-  }, [debounced])
+  }, [debounced, favoritesOnly])
 
   // Full search in background
   const query = useQuery({
-    queryKey: ['search', debounced],
+    queryKey: ['search', debounced, favoritesOnly],
     queryFn: async () => {
-      const result = await searchAllSources(debounced, searchCache)
-      setSessionCache(debounced, result)
+      const result = await searchAllSources(debounced, searchCache, undefined, false, favoritesOnly)
+      setSessionCache(debounced, result, favoritesOnly)
       return result
     },
     enabled: debounced.trim().length > 0,
     staleTime: 2 * 60 * 1000,
     placeholderData: () => {
       if (!debounced.trim()) return undefined
-      const cached = getSessionCache(debounced)
+      const cached = getSessionCache(debounced, favoritesOnly)
       if (cached) return cached
-      return queryClient.getQueryData<SearchAllResult>(['search', debounced])
+      return queryClient.getQueryData<SearchAllResult>(['search', debounced, favoritesOnly])
     },
   })
 

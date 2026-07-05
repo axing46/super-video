@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo, useRef } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { Search, Trash2, Film, Tv, Laugh, Clapperboard, Loader2 } from 'lucide-react'
+import { Search, Trash2, Film, Tv, Laugh, Clapperboard, Loader2, Heart } from 'lucide-react'
 import { useSearch } from './hooks'
 import { useSearchStore } from '@/stores/searchStore'
 import { searchSuggestions } from './api'
@@ -221,7 +221,18 @@ export function SearchPage() {
     setActiveCat(currentCat)
   }, [currentCat])
 
-  const { data, isLoading, isError, error, refetch } = useSearch(keyword)
+  // Favorites only toggle
+  const [favoritesOnly, setFavoritesOnly] = useState(() => {
+    return localStorage.getItem('tvcc_search_favorites_only') === 'true'
+  })
+
+  const toggleFavoritesOnly = () => {
+    const newValue = !favoritesOnly
+    setFavoritesOnly(newValue)
+    localStorage.setItem('tvcc_search_favorites_only', String(newValue))
+  }
+
+  const { data, isLoading, isError, error, refetch } = useSearch(keyword, favoritesOnly)
   const { addHistory } = useSearchStore()
 
   // Filter results by selected category
@@ -337,9 +348,21 @@ export function SearchPage() {
         </>
       )}
 
-      {/* Category tabs */}
+      {/* Category tabs + Favorites toggle */}
       {queryParam && (
-        <div className="flex items-center gap-1 sm:gap-1.5 mb-4 sm:mb-6 overflow-x-auto scrollbar-none">
+        <div className="flex items-center gap-2 mb-4 sm:mb-6 overflow-x-auto scrollbar-none">
+          <button
+            onClick={toggleFavoritesOnly}
+            className={`flex items-center gap-1 px-3 py-1.5 rounded-pill text-[11px] sm:text-[12px] font-semibold whitespace-nowrap transition-all duration-180
+              ${favoritesOnly
+                ? 'bg-accent/15 text-accent border border-accent/30'
+                : 'text-muted border border-white/10 hover:text-ink-2 hover:border-white/20'
+              }`}
+          >
+            <Heart size={12} fill={favoritesOnly ? 'currentColor' : 'none'} />
+            常用片源
+          </button>
+          <div className="w-px h-4 bg-white/10" />
           {CATEGORIES.map((cat) => {
             const count = catCounts[cat.key] ?? 0
             const isActive = activeCat === cat.key
