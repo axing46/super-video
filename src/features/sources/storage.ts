@@ -3,6 +3,8 @@ import { localVodSourceFromStorage, localVodSourceToJson } from '@/core/models'
 export type { LocalVodSource } from '@/core/models'
 
 const STORAGE_KEY = 'sv_sources_v1'
+const SOURCES_VERSION_KEY = 'sv_sources_version'
+const CURRENT_SOURCES_VERSION = 2 // 更新版本号来触发同步
 
 // 54个默认片源配置（内嵌到项目中，无需外网）
 const DEFAULT_SOURCES: LocalVodSource[] = [
@@ -65,6 +67,42 @@ const DEFAULT_SOURCES: LocalVodSource[] = [
 
 export async function loadAllSources(): Promise<LocalVodSource[]> {
   try {
+    // Check if sources version needs update
+    const savedVersion = localStorage.getItem(SOURCES_VERSION_KEY)
+    if (savedVersion !== String(CURRENT_SOURCES_VERSION)) {
+      // Version mismatch — update sources while preserving user's enabled/disabled state
+      const raw = localStorage.getItem(STORAGE_KEY)
+      let existingSources: LocalVodSource[] = []
+
+      if (raw) {
+        try {
+          existingSources = (JSON.parse(raw) as unknown[]).map(localVodSourceFromStorage)
+        } catch {
+          existingSources = []
+        }
+      }
+
+      // Create a map of existing sources' enabled state
+      const existingState = new Map(existingSources.map(s => [s.key, s.enabled]))
+
+      // Merge: use default sources, preserve user's enabled/disabled choices
+      const mergedSources = DEFAULT_SOURCES.map(s => ({
+        ...s,
+        enabled: existingState.has(s.key) ? existingState.get(s.key)! : s.enabled,
+      }))
+
+      // Add any user-added sources not in defaults
+      for (const existing of existingSources) {
+        if (!mergedSources.some(s => s.key === existing.key)) {
+          mergedSources.push(existing)
+        }
+      }
+
+      saveSources(mergedSources)
+      localStorage.setItem(SOURCES_VERSION_KEY, String(CURRENT_SOURCES_VERSION))
+      return mergedSources
+    }
+
     const raw = localStorage.getItem(STORAGE_KEY)
     if (!raw) {
       // First visit — save defaults
