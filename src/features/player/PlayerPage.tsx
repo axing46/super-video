@@ -667,18 +667,29 @@ function VideoPlayer({
             transition-opacity duration-220 ${showControls ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
         >
           {/* Progress bar */}
-          <div
-            ref={progressBarRef}
-            className={`h-1.5 bg-white/20 rounded-full mb-2 cursor-pointer group/progress ${isDragging ? 'h-2' : ''}`}
-            onMouseDown={handleMouseDown}
-            onTouchStart={handleTouchStart}
-          >
+          <div className="relative mb-2">
+            {/* Time tooltip when dragging */}
+            {isDragging && (
+              <div
+                className="absolute -top-8 transform -translate-x-1/2 bg-black/90 px-2 py-1 rounded text-[11px] text-white tabular-nums pointer-events-none z-10"
+                style={{ left: `${dragProgress * 100}%` }}
+              >
+                {formatTime(dragProgress * duration)}
+              </div>
+            )}
             <div
-              className="h-full bg-accent rounded-full relative transition-none"
-              style={{ width: isDragging ? `${dragProgress * 100}%` : duration > 0 ? `${(currentTime / duration) * 100}%` : '0%' }}
+              ref={progressBarRef}
+              className={`h-1.5 bg-white/20 rounded-full cursor-pointer group/progress ${isDragging ? 'h-2' : ''}`}
+              onMouseDown={handleMouseDown}
+              onTouchStart={handleTouchStart}
             >
-              <div className={`absolute right-0 top-1/2 -translate-y-1/2 w-3.5 h-3.5 bg-white rounded-full
-                shadow-md transition-opacity ${isDragging ? 'opacity-100 scale-110' : 'opacity-0 group-hover/progress:opacity-100'}`} />
+              <div
+                className="h-full bg-accent rounded-full relative transition-none"
+                style={{ width: isDragging ? `${dragProgress * 100}%` : duration > 0 ? `${(currentTime / duration) * 100}%` : '0%' }}
+              >
+                <div className={`absolute right-0 top-1/2 -translate-y-1/2 w-3.5 h-3.5 bg-white rounded-full
+                  shadow-md transition-opacity ${isDragging ? 'opacity-100 scale-110' : 'opacity-0 group-hover/progress:opacity-100'}`} />
+              </div>
             </div>
           </div>
 
