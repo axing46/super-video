@@ -1,11 +1,10 @@
 import { useState, useEffect, useMemo } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { ChevronLeft, ChevronRight, Search, Trash2, Film, Tv, Laugh, Clapperboard } from 'lucide-react'
+import { Search, Trash2, Film, Tv, Laugh, Clapperboard } from 'lucide-react'
 import { useSearch } from './hooks'
 import { VodGrid } from '@/components/vod/VodGrid'
 import { EmptyState, ErrorState } from '@/components/ui/Status'
 import type { VodItem } from '@/core/models'
-import { getSourceDisplayName } from '@/utils/source-names'
 
 // 热搜词
 const HOT_SEARCHES = ['漫威', '周星驰', '三体', '流浪地球', '庆余年', '漫长的季节', '繁花', '狂飙']
@@ -19,15 +18,6 @@ const QUICK_CATEGORIES = [
   { key: 'tv', label: '电视剧', icon: Tv, color: 'from-green-500/20 to-green-600/10' },
   { key: 'variety', label: '综艺', icon: Laugh, color: 'from-pink-500/20 to-pink-600/10' },
   { key: 'anime', label: '动漫', icon: Clapperboard, color: 'from-purple-500/20 to-purple-600/10' },
-]
-
-// 更新内容数据
-const UPDATE_ITEMS = [
-  { id: 1, title: '默认片源', desc: '初始导入27个片源，删除搜索片源分类，提升视觉体验' },
-  { id: 2, title: '音量调节', desc: '仿造YouTube横向音量控制，更便捷的音量调节' },
-  { id: 3, title: '进度条', desc: '可拖动进度条，避免松手弹回，拖动时显示时间反馈' },
-  { id: 4, title: '手机适配', desc: '全面优化移动端UI，提供更好的手机浏览体验' },
-  { id: 5, title: '联系我们', desc: '新增首页弹窗，展示联系方式及交流群信息' },
 ]
 
 // 获取搜索历史
@@ -57,65 +47,6 @@ function deleteSearchHistory(keyword: string) {
 // 清空搜索历史
 function clearSearchHistory() {
   localStorage.removeItem(SEARCH_HISTORY_KEY)
-}
-
-function UpdateBanner() {
-  const [current, setCurrent] = useState(0)
-  const [isHovered, setIsHovered] = useState(false)
-
-  useEffect(() => {
-    if (isHovered) return
-    const timer = setInterval(() => {
-      setCurrent((prev) => (prev + 1) % UPDATE_ITEMS.length)
-    }, 4000)
-    return () => clearInterval(timer)
-  }, [isHovered])
-
-  return (
-    <div
-      className="relative mb-5 rounded-2xl overflow-hidden bg-gradient-to-r from-accent/10 via-accent/5 to-transparent border border-white/10"
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
-    >
-      <div className="px-4 py-3 sm:px-6 sm:py-4">
-        <div className="flex items-center gap-2 mb-1.5">
-          <span className="px-2 py-0.5 rounded-full bg-accent/20 text-accent text-[10px] font-bold">更新</span>
-          <span className="text-[10px] text-muted">v{UPDATE_ITEMS[current].id}.0</span>
-        </div>
-        <h3 className="text-[14px] sm:text-[15px] font-bold text-ink mb-0.5">{UPDATE_ITEMS[current].title}</h3>
-        <p className="text-[11px] sm:text-[12px] text-muted leading-relaxed">{UPDATE_ITEMS[current].desc}</p>
-      </div>
-
-      {/* Navigation arrows */}
-      <button
-        onClick={() => setCurrent((prev) => (prev - 1 + UPDATE_ITEMS.length) % UPDATE_ITEMS.length)}
-        className="absolute left-1.5 top-1/2 -translate-y-1/2 w-6 h-6 rounded-full bg-black/40 backdrop-blur-sm
-          flex items-center justify-center text-white/70 hover:text-white hover:bg-black/60 transition-all"
-      >
-        <ChevronLeft size={14} />
-      </button>
-      <button
-        onClick={() => setCurrent((prev) => (prev + 1) % UPDATE_ITEMS.length)}
-        className="absolute right-1.5 top-1/2 -translate-y-1/2 w-6 h-6 rounded-full bg-black/40 backdrop-blur-sm
-          flex items-center justify-center text-white/70 hover:text-white hover:bg-black/60 transition-all"
-      >
-        <ChevronRight size={14} />
-      </button>
-
-      {/* Dots indicator */}
-      <div className="absolute bottom-1.5 left-1/2 -translate-x-1/2 flex items-center gap-1">
-        {UPDATE_ITEMS.map((_, i) => (
-          <button
-            key={i}
-            onClick={() => setCurrent(i)}
-            className={`w-1 h-1 rounded-full transition-all duration-300 ${
-              i === current ? 'bg-accent w-3' : 'bg-white/30 hover:bg-white/50'
-            }`}
-          />
-        ))}
-      </div>
-    </div>
-  )
 }
 
 // 热搜词组件
@@ -284,27 +215,16 @@ export function SearchPage() {
     return filterByCategory(data.items, activeCat)
   }, [data, activeCat])
 
-  // Filter by source and type
-  const [sourceFilter, setSourceFilter] = useState<string | null>(null)
+  // Filter by language and type
+  const [langFilter, setLangFilter] = useState<string | null>(null)
   const [typeFilter, setTypeFilter] = useState<string | null>(null)
 
   const finalItems = useMemo(() => {
     let items = categoryItems
-    if (sourceFilter) items = items.filter((i) => i.sourceKey === sourceFilter)
+    if (langFilter) items = items.filter((i) => (i.vodLang ?? '').includes(langFilter))
     if (typeFilter) items = items.filter((i) => (i.typeName ?? '').includes(typeFilter))
     return items
-  }, [categoryItems, sourceFilter, typeFilter])
-
-  // Source badges
-  const sourceBadges = useMemo(() => {
-    if (!data) return []
-    const map = new Map<string, { key: string; count: number }>()
-    for (const item of data.items) {
-      if (!map.has(item.sourceKey)) map.set(item.sourceKey, { key: item.sourceKey, count: 0 })
-      map.get(item.sourceKey)!.count++
-    }
-    return [...map.values()].sort((a, b) => b.count - a.count)
-  }, [data])
+  }, [categoryItems, langFilter, typeFilter])
 
   // Type badges
   const typeBadges = useMemo(() => {
@@ -316,6 +236,18 @@ export function SearchPage() {
       map.set(t, (map.get(t) ?? 0) + 1)
     }
     return [...map.entries()].sort((a, b) => b[1] - a[1]).slice(0, 10)
+  }, [data])
+
+  // Language badges (instead of source badges)
+  const langBadges = useMemo(() => {
+    if (!data) return []
+    const map = new Map<string, number>()
+    for (const item of data.items) {
+      const lang = item.vodLang?.trim()
+      if (!lang) continue
+      map.set(lang, (map.get(lang) ?? 0) + 1)
+    }
+    return [...map.entries()].sort((a, b) => b[1] - a[1]).slice(0, 8)
   }, [data])
 
   // Count items per category
@@ -381,7 +313,6 @@ export function SearchPage() {
             onClear={clearSearchHistory}
           />
           <QuickCategories onSelect={handleSelectSearch} />
-          <UpdateBanner />
         </>
       )}
 
@@ -414,28 +345,28 @@ export function SearchPage() {
         </div>
       )}
 
-      {/* Source + Type filter badges */}
+      {/* Language + Type filter badges */}
       {queryParam && data && data.items.length > 0 && (
         <div className="space-y-1.5 sm:space-y-2 mb-3 sm:mb-4">
-          {sourceBadges.length > 1 && (
+          {langBadges.length > 1 && (
             <div className="flex items-center gap-1 sm:gap-1.5 flex-wrap">
-              <span className="text-[10px] sm:text-[11px] text-muted/60 mr-0.5 sm:mr-1">片源:</span>
-              {sourceBadges.map((s) => {
-                const isActive = sourceFilter === s.key
+              <span className="text-[10px] sm:text-[11px] text-muted/60 mr-0.5 sm:mr-1">语言:</span>
+              {langBadges.map(([lang, count]) => {
+                const isActive = langFilter === lang
                 return (
                   <button
-                    key={s.key}
-                    onClick={() => setSourceFilter(isActive ? null : s.key)}
+                    key={lang}
+                    onClick={() => setLangFilter(isActive ? null : lang)}
                     className={`pill text-[10px] sm:text-[11px] cursor-pointer transition-all duration-150
                       ${isActive ? '!bg-accent/15 !border-accent/30 !text-accent' : 'hover:border-white/20'}`}
                   >
-                    {getSourceDisplayName(s.key)}
-                    <span className="ml-0.5 sm:ml-1 opacity-60">{s.count}</span>
+                    {lang}
+                    <span className="ml-0.5 sm:ml-1 opacity-60">{count}</span>
                   </button>
                 )
               })}
-              {sourceFilter && (
-                <button onClick={() => setSourceFilter(null)} className="text-[9px] sm:text-[10px] text-muted hover:text-ink-2 ml-0.5 sm:ml-1">清除</button>
+              {langFilter && (
+                <button onClick={() => setLangFilter(null)} className="text-[9px] sm:text-[10px] text-muted hover:text-ink-2 ml-0.5 sm:ml-1">清除</button>
               )}
             </div>
           )}
