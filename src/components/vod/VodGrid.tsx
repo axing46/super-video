@@ -4,21 +4,20 @@ import { VodCard, VodCardSkeleton } from './VodCard'
 interface VodGridProps {
   items: VodItem[]
   loading?: boolean
-  /** Override columns for specific layouts */
-  columns?: { sm?: number; md?: number; lg?: number; xl?: number }
+  /** Card layout: 'landscape' for YouTube-style, 'poster' for vertical */
+  layout?: 'poster' | 'landscape'
 }
 
-export function VodGrid({ items, loading, columns }: VodGridProps) {
-  const cols = {
-    sm: columns?.sm ?? 3,
-    md: columns?.md ?? 4,
-    lg: columns?.lg ?? 5,
-    xl: columns?.xl ?? 6,
-  }
+export function VodGrid({ items, loading, layout = 'landscape' }: VodGridProps) {
+  // YouTube-style: more columns, landscape cards
+  // Poster style: fewer columns, vertical cards
+  const gridClass = layout === 'landscape'
+    ? 'grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-4'
+    : 'grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-2 sm:gap-3'
 
   if (loading) {
     return (
-      <div className={`grid grid-cols-2 sm:grid-cols-${cols.sm} md:grid-cols-${cols.md} lg:grid-cols-${cols.lg} xl:grid-cols-${cols.xl} gap-3 sm:gap-4`}>
+      <div className={gridClass}>
         {Array.from({ length: 12 }).map((_, i) => (
           <VodCardSkeleton key={i} />
         ))}
@@ -27,10 +26,10 @@ export function VodGrid({ items, loading, columns }: VodGridProps) {
   }
 
   return (
-    <div className={`grid grid-cols-2 sm:grid-cols-${cols.sm} md:grid-cols-${cols.md} lg:grid-cols-${cols.lg} xl:grid-cols-${cols.xl} gap-2 sm:gap-3`}>
+    <div className={gridClass}>
       {items.map((item) => (
         <div key={`${item.sourceKey}-${item.vodId}`} className="animate-fade-up opacity-0 [animation-fill-mode:forwards]">
-          <VodCard item={item} />
+          <VodCard item={item} layout={layout} />
         </div>
       ))}
     </div>
