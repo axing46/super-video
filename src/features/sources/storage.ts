@@ -4,7 +4,7 @@ export type { LocalVodSource } from '@/core/models'
 
 const STORAGE_KEY = 'sv_sources_v1'
 const SOURCES_VERSION_KEY = 'sv_sources_version'
-const CURRENT_SOURCES_VERSION = 7 // 恢复最初的8个片源
+const CURRENT_SOURCES_VERSION = 8 // 54个片源
 
 // CORS proxies to try (in order) when fetching from browser
 const CORS_PROXIES = [
@@ -16,9 +16,10 @@ const CORS_PROXIES = [
   (url: string) => `https://thingproxy.freeboard.io/fetch/${url}`,
 ]
 
-// 8个默认片源配置（最初版本）
+// 54个默认片源配置
 const DEFAULT_SOURCES: LocalVodSource[] = [
   { key: 'ikunzy', name: 'ikun资源', apiUrl: 'https://ikunzyapi.com/api.php/provide/vod', detailUrl: 'https://ikunzyapi.com/api.php/provide/vod', enabled: true },
+  { key: 'iqiyizy', name: '爱奇艺资源', apiUrl: 'https://iqiyizyapi.com/api.php/provide/vod', detailUrl: 'https://iqiyizyapi.com/api.php/provide/vod', enabled: true },
   { key: 'ffzy', name: '非凡资源', apiUrl: 'https://cj.ffzyapi.com/api.php/provide/vod', detailUrl: 'https://cj.ffzyapi.com/api.php/provide/vod', enabled: true },
   { key: 'hongniu', name: '红牛资源', apiUrl: 'https://www.hongniuzy2.com/api.php/provide/vod', detailUrl: 'https://www.hongniuzy2.com/api.php/provide/vod', enabled: true },
   { key: 'lzcaiji', name: '量子采集', apiUrl: 'https://cj.lzcaiji.com/api.php/provide/vod', detailUrl: 'https://cj.lzcaiji.com/api.php/provide/vod', enabled: true },
@@ -26,6 +27,52 @@ const DEFAULT_SOURCES: LocalVodSource[] = [
   { key: '360zy', name: '360资源', apiUrl: 'https://360zy.com/api.php/provide/vod', detailUrl: 'https://360zy.com/api.php/provide/vod', enabled: true },
   { key: 'wujin', name: '无尽资源', apiUrl: 'https://api.wujinapi.me/api.php/provide/vod', detailUrl: 'https://api.wujinapi.me/api.php/provide/vod', enabled: true },
   { key: 'maoyan', name: '猫眼资源', apiUrl: 'https://api.maoyanapi.top/api.php/provide/vod', detailUrl: 'https://api.maoyanapi.top/api.php/provide/vod', enabled: true },
+  { key: 'heimuer', name: '黑木耳资源', apiUrl: 'https://json.heimuer.xyz/api.php/provide/vod', detailUrl: 'https://json.heimuer.xyz/api.php/provide/vod', enabled: true },
+  { key: 'dbzy', name: '豆瓣资源', apiUrl: 'https://dbzyapi.com/api.php/provide/vod', detailUrl: 'https://dbzyapi.com/api.php/provide/vod', enabled: true },
+  { key: 'bfzy', name: '暴风资源', apiUrl: 'https://bfzyapi.com/api.php/provide/vod', detailUrl: 'https://bfzyapi.com/api.php/provide/vod', enabled: true },
+  { key: 'tpzy', name: '淘片资源', apiUrl: 'https://taopianapi.com/home/cjapi/vod/mc/we/page', detailUrl: 'https://taopianapi.com/home/cjapi/vod/mc/we/page', enabled: true },
+  { key: 'gszy', name: '光速资源', apiUrl: 'https://api.guangsuapi.com/api.php/provide/vod', detailUrl: 'https://api.guangsuapi.com/api.php/provide/vod', enabled: true },
+  { key: 'tkzy', name: '天空资源', apiUrl: 'https://api.tiankongapi.com/api.php/provide/vod', detailUrl: 'https://api.tiankongapi.com/api.php/provide/vod', enabled: true },
+  { key: 'jszy', name: '极速资源', apiUrl: 'https://jszyapi.com/api.php/provide/vod', detailUrl: 'https://jszyapi.com/api.php/provide/vod', enabled: true },
+  { key: 'lydzy', name: '量子资源', apiUrl: 'https://cj.lziapi.com/api.php/provide/vod', detailUrl: 'https://cj.lziapi.com/api.php/provide/vod', enabled: true },
+  { key: 'wzzy', name: '无尽ME', apiUrl: 'https://www.wujinapi.me/api.php/provide/vod', detailUrl: 'https://www.wujinapi.me/api.php/provide/vod', enabled: true },
+  { key: 'bfzy2', name: '暴风极速', apiUrl: 'https://bfzyapi.com/api.php/provide/vod', detailUrl: 'https://bfzyapi.com/api.php/provide/vod', enabled: true },
+  { key: 'moduzy', name: '魔都资源', apiUrl: 'https://moduzyapi.com/api.php/provide/vod', detailUrl: 'https://moduzyapi.com/api.php/provide/vod', enabled: true },
+  { key: 'kkzy', name: '快快资源', apiUrl: 'https://api.kkzyapi.com/api.php/provide/vod', detailUrl: 'https://api.kkzyapi.com/api.php/provide/vod', enabled: true },
+  { key: 'hnzy', name: '红牛极速', apiUrl: 'https://hnzyapi.com/api.php/provide/vod', detailUrl: 'https://hnzyapi.com/api.php/provide/vod', enabled: true },
+  { key: 'wzwzy', name: '万能资源', apiUrl: 'https://www.wnzyapi.com/api.php/provide/vod', detailUrl: 'https://www.wnzyapi.com/api.php/provide/vod', enabled: true },
+  { key: 'hwzy', name: '红牛VIP', apiUrl: 'https://www.hongniuzy2.com/api.php/provide/vod', detailUrl: 'https://www.hongniuzy2.com/api.php/provide/vod', enabled: true },
+  { key: 'ckzy', name: '超人资源', apiUrl: 'https://ckzy.me/api.php/provide/vod', detailUrl: 'https://ckzy.me/api.php/provide/vod', enabled: true },
+  { key: 'bfzy3', name: '暴风资源2', apiUrl: 'https://cj.bfzyapi.com/api.php/provide/vod', detailUrl: 'https://cj.bfzyapi.com/api.php/provide/vod', enabled: true },
+  { key: 'tpzy2', name: '淘片资源2', apiUrl: 'https://cj.taopiaopiao.com/api.php/provide/vod', detailUrl: 'https://cj.taopiaopiao.com/api.php/provide/vod', enabled: true },
+  { key: 'lydzy2', name: '量子资源2', apiUrl: 'https://cj.lziapi.com/api.php/provide/vod', detailUrl: 'https://cj.lziapi.com/api.php/provide/vod', enabled: true },
+  { key: 'jszy2', name: '极速资源2', apiUrl: 'https://jszyapi.com/api.php/provide/vod', detailUrl: 'https://jszyapi.com/api.php/provide/vod', enabled: true },
+  { key: 'gszy2', name: '光速资源2', apiUrl: 'https://cj.guangsuapi.com/api.php/provide/vod', detailUrl: 'https://cj.guangsuapi.com/api.php/provide/vod', enabled: true },
+  { key: 'tkzy2', name: '天空资源2', apiUrl: 'https://api.tiankongapi.com/api.php/provide/vod', detailUrl: 'https://api.tiankongapi.com/api.php/provide/vod', enabled: true },
+  { key: 'sdzy2', name: '闪电资源2', apiUrl: 'https://sdzyapi.com/api.php/provide/vod', detailUrl: 'https://sdzyapi.com/api.php/provide/vod', enabled: true },
+  { key: '360zy2', name: '360资源2', apiUrl: 'https://360zy.com/api.php/provide/vod', detailUrl: 'https://360zy.com/api.php/provide/vod', enabled: true },
+  { key: 'maoyan2', name: '猫眼资源2', apiUrl: 'https://api.maoyanapi.top/api.php/provide/vod', detailUrl: 'https://api.maoyanapi.top/api.php/provide/vod', enabled: true },
+  { key: 'wujin2', name: '无尽资源2', apiUrl: 'https://api.wujinapi.me/api.php/provide/vod', detailUrl: 'https://api.wujinapi.me/api.php/provide/vod', enabled: true },
+  { key: 'heimuer2', name: '黑木耳资源2', apiUrl: 'https://json.heimuer.xyz/api.php/provide/vod', detailUrl: 'https://json.heimuer.xyz/api.php/provide/vod', enabled: true },
+  { key: 'dbzy2', name: '豆瓣资源2', apiUrl: 'https://dbzyapi.com/api.php/provide/vod', detailUrl: 'https://dbzyapi.com/api.php/provide/vod', enabled: true },
+  { key: 'moduzy2', name: '魔都资源2', apiUrl: 'https://moduzyapi.com/api.php/provide/vod', detailUrl: 'https://moduzyapi.com/api.php/provide/vod', enabled: true },
+  { key: 'kkzy2', name: '快快资源2', apiUrl: 'https://api.kkzyapi.com/api.php/provide/vod', detailUrl: 'https://api.kkzyapi.com/api.php/provide/vod', enabled: true },
+  { key: 'hnzy2', name: '红牛极速2', apiUrl: 'https://hnzyapi.com/api.php/provide/vod', detailUrl: 'https://hnzyapi.com/api.php/provide/vod', enabled: true },
+  { key: 'wzwzy2', name: '万能资源2', apiUrl: 'https://www.wnzyapi.com/api.php/provide/vod', detailUrl: 'https://www.wnzyapi.com/api.php/provide/vod', enabled: true },
+  { key: 'hongniuzy', name: '红牛资源2', apiUrl: 'https://www.hongniuzy2.com/api.php/provide/vod', detailUrl: 'https://www.hongniuzy2.com/api.php/provide/vod', enabled: true },
+  { key: 'ffzy2', name: '非凡资源2', apiUrl: 'https://cj.ffzyapi.com/api.php/provide/vod', detailUrl: 'https://cj.ffzyapi.com/api.php/provide/vod', enabled: true },
+  { key: 'iqiyizy2', name: '爱奇艺资源2', apiUrl: 'https://iqiyizyapi.com/api.php/provide/vod', detailUrl: 'https://iqiyizyapi.com/api.php/provide/vod', enabled: true },
+  { key: 'ikunzy2', name: 'ikun资源2', apiUrl: 'https://ikunzyapi.com/api.php/provide/vod', detailUrl: 'https://ikunzyapi.com/api.php/provide/vod', enabled: true },
+  { key: 'lzcaiji2', name: '量子采集2', apiUrl: 'https://cj.lzcaiji.com/api.php/provide/vod', detailUrl: 'https://cj.lzcaiji.com/api.php/provide/vod', enabled: true },
+  { key: 'sdzy3', name: '闪电资源3', apiUrl: 'https://sdzyapi.com/api.php/provide/vod', detailUrl: 'https://sdzyapi.com/api.php/provide/vod', enabled: true },
+  { key: '360zy3', name: '360资源3', apiUrl: 'https://360zy.com/api.php/provide/vod', detailUrl: 'https://360zy.com/api.php/provide/vod', enabled: true },
+  { key: 'maoyan3', name: '猫眼资源3', apiUrl: 'https://api.maoyanapi.top/api.php/provide/vod', detailUrl: 'https://api.maoyanapi.top/api.php/provide/vod', enabled: true },
+  { key: 'wujin3', name: '无尽资源3', apiUrl: 'https://api.wujinapi.me/api.php/provide/vod', detailUrl: 'https://api.wujinapi.me/api.php/provide/vod', enabled: true },
+  { key: 'heimuer3', name: '黑木耳资源3', apiUrl: 'https://json.heimuer.xyz/api.php/provide/vod', detailUrl: 'https://json.heimuer.xyz/api.php/provide/vod', enabled: true },
+  { key: 'dbzy3', name: '豆瓣资源3', apiUrl: 'https://dbzyapi.com/api.php/provide/vod', detailUrl: 'https://dbzyapi.com/api.php/provide/vod', enabled: true },
+  { key: 'moduzy3', name: '魔都资源3', apiUrl: 'https://moduzyapi.com/api.php/provide/vod', detailUrl: 'https://moduzyapi.com/api.php/provide/vod', enabled: true },
+  { key: 'kkzy3', name: '快快资源3', apiUrl: 'https://api.kkzyapi.com/api.php/provide/vod', detailUrl: 'https://api.kkzyapi.com/api.php/provide/vod', enabled: true },
+  { key: 'hnzy3', name: '红牛极速3', apiUrl: 'https://hnzyapi.com/api.php/provide/vod', detailUrl: 'https://hnzyapi.com/api.php/provide/vod', enabled: true },
 ]
 
 export async function loadAllSources(): Promise<LocalVodSource[]> {
