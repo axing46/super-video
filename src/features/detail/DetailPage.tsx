@@ -76,17 +76,17 @@ export function DetailPage() {
       )}
 
       {/* Hero section */}
-      <div className="glass-card p-6 lg:p-8 flex flex-col md:flex-row gap-6 md:gap-8">
-        {/* Poster */}
-        <div className="w-full md:w-[280px] flex-shrink-0">
+      <div className="glass-card p-4 sm:p-6 lg:p-8 flex flex-col sm:flex-row gap-4 sm:gap-6 md:gap-8">
+        {/* Poster - mobile: smaller, tablet+: full size */}
+        <div className="w-[120px] sm:w-[180px] md:w-[220px] lg:w-[280px] flex-shrink-0 mx-auto sm:mx-0">
           {data.vodPic ? (
             <img
               src={proxyImageUrl(data.vodPic)}
               alt={data.vodName}
-              className="w-full aspect-[2/3] object-cover rounded-cover"
+              className="w-full aspect-[2/3] object-cover rounded-lg sm:rounded-cover"
             />
           ) : (
-            <div className="w-full aspect-[2/3] bg-hair rounded-cover flex items-center justify-center text-muted text-sm">
+            <div className="w-full aspect-[2/3] bg-hair rounded-lg sm:rounded-cover flex items-center justify-center text-muted text-xs sm:text-sm">
               暂无封面
             </div>
           )}
@@ -94,51 +94,51 @@ export function DetailPage() {
 
         {/* Info */}
         <div className="flex-1 min-w-0">
-          <h1 className="text-[clamp(24px,3vw,36px)] font-display font-extrabold text-ink tracking-tight leading-tight">
+          <h1 className="text-[18px] sm:text-[22px] md:text-[28px] lg:text-[36px] font-display font-extrabold text-ink tracking-tight leading-tight">
             {data.vodName}
           </h1>
 
           {/* Meta tags */}
-          <div className="flex flex-wrap items-center gap-2 mt-3">
-            {data.typeName && <span className="pill">{data.typeName}</span>}
-            {data.vodYear && <span className="pill">{data.vodYear}</span>}
-            {data.vodArea && <span className="pill">{data.vodArea}</span>}
-            {data.vodClass && <span className="pill">{data.vodClass}</span>}
-            {data.vodLang && <span className="pill">{data.vodLang}</span>}
+          <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 mt-2 sm:mt-3">
+            {data.typeName && <span className="pill text-[10px] sm:text-[11px]">{data.typeName}</span>}
+            {data.vodYear && <span className="pill text-[10px] sm:text-[11px]">{data.vodYear}</span>}
+            {data.vodArea && <span className="pill text-[10px] sm:text-[11px]">{data.vodArea}</span>}
+            {data.vodClass && <span className="pill text-[10px] sm:text-[11px] hidden sm:inline-flex">{data.vodClass}</span>}
+            {data.vodLang && <span className="pill text-[10px] sm:text-[11px]">{data.vodLang}</span>}
             {data.vodDuration && (
-              <span className="pill flex items-center gap-1">
-                <Clock size={11} /> {data.vodDuration}
+              <span className="pill text-[10px] sm:text-[11px] flex items-center gap-1">
+                <Clock size={10} /> {data.vodDuration}
               </span>
             )}
           </div>
 
           {/* Rating */}
           {data.vodRemarks && (
-            <div className="flex items-center gap-1.5 mt-4 text-champagne">
-              <Star size={18} fill="#f4d28a" strokeWidth={0} />
-              <span className="text-[16px] font-bold">{data.vodRemarks}</span>
+            <div className="flex items-center gap-1.5 mt-3 sm:mt-4 text-champagne">
+              <Star size={14} sm:size={18} fill="#f4d28a" strokeWidth={0} />
+              <span className="text-[14px] sm:text-[16px] font-bold">{data.vodRemarks}</span>
             </div>
           )}
 
           {/* Description */}
           {data.vodContent && (
-            <p className="mt-4 text-[13.5px] text-ink-2 leading-relaxed line-clamp-5">
+            <p className="mt-3 sm:mt-4 text-[12px] sm:text-[13.5px] text-ink-2 leading-relaxed line-clamp-3 sm:line-clamp-5">
               {data.vodContent}
             </p>
           )}
 
           {/* Director / Actor */}
-          <div className="mt-4 space-y-1.5">
+          <div className="mt-3 sm:mt-4 space-y-1 sm:space-y-1.5">
             {data.vodDirector && (
-              <div className="text-[13px]">
+              <div className="text-[12px] sm:text-[13px]">
                 <span className="text-muted">导演：</span>
                 <span className="text-ink-2">{data.vodDirector}</span>
               </div>
             )}
             {data.vodActor && (
-              <div className="text-[13px]">
+              <div className="text-[12px] sm:text-[13px]">
                 <span className="text-muted">演员：</span>
-                <span className="text-ink-2">{data.vodActor}</span>
+                <span className="text-ink-2 line-clamp-1">{data.vodActor}</span>
               </div>
             )}
           </div>
@@ -158,14 +158,14 @@ export function DetailPage() {
                 vodContent: data.vodContent,
               })
             }
-            className={`mt-5 flex items-center gap-2 px-5 py-2.5 rounded-btn text-[13px] font-semibold
+            className={`mt-4 sm:mt-5 flex items-center gap-2 px-4 sm:px-5 py-2 sm:py-2.5 rounded-btn text-[12px] sm:text-[13px] font-semibold
               transition-all duration-180 border
               ${favorited
                 ? 'bg-champagne/10 border-champagne/40 text-champagne'
                 : 'border-white/10 bg-white/[0.04] text-ink-2 hover:border-accent/30 hover:text-accent'
               }`}
           >
-            <Heart size={15} fill={favorited ? '#f4d28a' : 'none'} />
+            <Heart size={13} sm:size={15} fill={favorited ? '#f4d28a' : 'none'} />
             {favorited ? '已收藏' : '收藏'}
           </button>
         </div>
