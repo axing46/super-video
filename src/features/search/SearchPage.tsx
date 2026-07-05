@@ -2,15 +2,13 @@ import { useState, useEffect, useMemo } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { Search, Trash2, Film, Tv, Laugh, Clapperboard } from 'lucide-react'
 import { useSearch } from './hooks'
+import { useSearchStore } from '@/stores/searchStore'
 import { VodGrid } from '@/components/vod/VodGrid'
 import { EmptyState, ErrorState } from '@/components/ui/Status'
 import type { VodItem } from '@/core/models'
 
 // 热搜词
 const HOT_SEARCHES = ['漫威', '周星驰', '三体', '流浪地球', '庆余年', '漫长的季节', '繁花', '狂飙']
-
-// 搜索历史存储key
-const SEARCH_HISTORY_KEY = 'tvcc_search_history'
 
 // 快捷分类
 const QUICK_CATEGORIES = [
@@ -19,35 +17,6 @@ const QUICK_CATEGORIES = [
   { key: 'variety', label: '综艺', icon: Laugh, color: 'from-pink-500/20 to-pink-600/10' },
   { key: 'anime', label: '动漫', icon: Clapperboard, color: 'from-purple-500/20 to-purple-600/10' },
 ]
-
-// 获取搜索历史
-function getSearchHistory(): string[] {
-  try {
-    const raw = localStorage.getItem(SEARCH_HISTORY_KEY)
-    return raw ? JSON.parse(raw) : []
-  } catch {
-    return []
-  }
-}
-
-// 保存搜索历史
-function saveSearchHistory(keyword: string) {
-  const history = getSearchHistory()
-  const filtered = history.filter(h => h !== keyword)
-  filtered.unshift(keyword)
-  localStorage.setItem(SEARCH_HISTORY_KEY, JSON.stringify(filtered.slice(0, 10)))
-}
-
-// 删除搜索历史
-function deleteSearchHistory(keyword: string) {
-  const history = getSearchHistory()
-  localStorage.setItem(SEARCH_HISTORY_KEY, JSON.stringify(history.filter(h => h !== keyword)))
-}
-
-// 清空搜索历史
-function clearSearchHistory() {
-  localStorage.removeItem(SEARCH_HISTORY_KEY)
-}
 
 // 热搜词组件
 function HotSearches({ onSelect }: { onSelect: (q: string) => void }) {
@@ -71,16 +40,8 @@ function HotSearches({ onSelect }: { onSelect: (q: string) => void }) {
 }
 
 // 搜索历史组件
-function SearchHistory({ onSelect, onDelete, onClear }: {
-  onSelect: (q: string) => void
-  onDelete: (q: string) => void
-  onClear: () => void
-}) {
-  const [history, setHistory] = useState<string[]>([])
-
-  useEffect(() => {
-    setHistory(getSearchHistory())
-  }, [])
+function SearchHistory({ onSelect }: { onSelect: (q: string) => void }) {
+  const { history, removeHistory, clearHistory } = useSearchStore()
 
   if (history.length === 0) return null
 
@@ -89,7 +50,7 @@ function SearchHistory({ onSelect, onDelete, onClear }: {
       <div className="flex items-center justify-between mb-3">
         <h3 className="text-[13px] font-semibold text-ink">搜索历史</h3>
         <button
-          onClick={() => { onClear(); setHistory([]) }}
+          onClick={clearHistory}
           className="flex items-center gap-1 text-[11px] text-muted hover:text-ink transition-colors"
         >
           <Trash2 size={12} />
@@ -106,7 +67,7 @@ function SearchHistory({ onSelect, onDelete, onClear }: {
               {q}
             </button>
             <button
-              onClick={() => { onDelete(q); setHistory(h => h.filter(i => i !== q)) }}
+              onClick={() => removeHistory(q)}
               className="text-muted/50 hover:text-ink transition-colors ml-1"
             >
               ×
@@ -208,6 +169,7 @@ export function SearchPage() {
   }, [currentCat])
 
   const { data, isLoading, isError, error, refetch } = useSearch(keyword)
+  const { addHistory } = useSearchStore()
 
   // Filter results by selected category
   const categoryItems = useMemo(() => {
@@ -264,14 +226,14 @@ export function SearchPage() {
     e.preventDefault()
     const q = keyword.trim()
     if (q) {
-      saveSearchHistory(q)
+      addHistory(q)
       setParams({ q, cat: activeCat === 'all' ? undefined : activeCat } as Record<string, string>)
     }
   }
 
   const handleSelectSearch = (q: string) => {
     setKeyword(q)
-    saveSearchHistory(q)
+    addHistory(q)
     setParams({ q, cat: activeCat === 'all' ? undefined : activeCat } as Record<string, string>)
   }
 
@@ -307,11 +269,7 @@ export function SearchPage() {
             </button>
           </form>
           <HotSearches onSelect={handleSelectSearch} />
-          <SearchHistory
-            onSelect={handleSelectSearch}
-            onDelete={deleteSearchHistory}
-            onClear={clearSearchHistory}
-          />
+          <SearchHistory onSelect={handleSelectSearch} />
           <QuickCategories onSelect={handleSelectSearch} />
         </>
       )}
