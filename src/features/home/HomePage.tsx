@@ -1,78 +1,10 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Star, ChevronDown, ChevronUp, Search, X, Copy, Check, ChevronLeft, ChevronRight } from 'lucide-react'
+import { Star, ChevronDown, ChevronUp, Search, X, Copy, Check } from 'lucide-react'
 import { loadMovieData, getGenres, getMoviesByGenre, type MovieItem } from './movieData'
 import { Loading, ErrorState } from '@/components/ui/Status'
 
 const POPUP_SHOWN_KEY = 'tvcc_popup_shown_session'
-
-// 更新内容数据
-const UPDATE_ITEMS = [
-  { id: 1, title: '默认片源', desc: '初始导入27个片源，删除搜索片源分类，提升视觉体验' },
-  { id: 2, title: '音量调节', desc: '仿造YouTube横向音量控制，更便捷的音量调节' },
-  { id: 3, title: '进度条', desc: '可拖动进度条，避免松手弹回，拖动时显示时间反馈' },
-  { id: 4, title: '手机适配', desc: '全面优化移动端UI，提供更好的手机浏览体验' },
-  { id: 5, title: '联系我们', desc: '新增首页弹窗，展示联系方式及交流群信息' },
-]
-
-function Banner() {
-  const [current, setCurrent] = useState(0)
-  const [isHovered, setIsHovered] = useState(false)
-
-  useEffect(() => {
-    if (isHovered) return
-    const timer = setInterval(() => {
-      setCurrent((prev) => (prev + 1) % UPDATE_ITEMS.length)
-    }, 4000)
-    return () => clearInterval(timer)
-  }, [isHovered])
-
-  return (
-    <div
-      className="relative mb-6 rounded-2xl overflow-hidden bg-gradient-to-r from-accent/10 via-accent/5 to-transparent border border-white/10"
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
-    >
-      <div className="px-5 py-4 sm:px-8 sm:py-5">
-        <div className="flex items-center gap-2 mb-2">
-          <span className="px-2 py-0.5 rounded-full bg-accent/20 text-accent text-[10px] font-bold">更新</span>
-          <span className="text-[11px] text-muted">v{UPDATE_ITEMS[current].id}.0</span>
-        </div>
-        <h3 className="text-[15px] sm:text-[17px] font-bold text-ink mb-1">{UPDATE_ITEMS[current].title}</h3>
-        <p className="text-[12px] sm:text-[13px] text-muted leading-relaxed">{UPDATE_ITEMS[current].desc}</p>
-      </div>
-
-      {/* Navigation arrows */}
-      <button
-        onClick={() => setCurrent((prev) => (prev - 1 + UPDATE_ITEMS.length) % UPDATE_ITEMS.length)}
-        className="absolute left-2 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full bg-black/40 backdrop-blur-sm
-          flex items-center justify-center text-white/70 hover:text-white hover:bg-black/60 transition-all opacity-0 group-hover:opacity-100 sm:opacity-100"
-      >
-        <ChevronLeft size={16} />
-      </button>
-      <button
-        onClick={() => setCurrent((prev) => (prev + 1) % UPDATE_ITEMS.length)}
-        className="absolute right-2 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full bg-black/40 backdrop-blur-sm
-          flex items-center justify-center text-white/70 hover:text-white hover:bg-black/60 transition-all opacity-0 group-hover:opacity-100 sm:opacity-100"
-      >
-        <ChevronRight size={16} />
-      </button>
-
-      {/* Dots indicator */}
-      <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex items-center gap-1.5">
-        {UPDATE_ITEMS.map((_, i) => (
-          <button
-            key={i}
-            onClick={() => setCurrent(i)}
-            className={`w-1.5 h-1.5 rounded-full transition-all duration-300 ${
-              i === current ? 'bg-accent w-4' : 'bg-white/30 hover:bg-white/50'
-            }`}
-          />
-        ))}
-      </div>
-    </div>
-  )
-}
 
 function WelcomePopup() {
   const [show, setShow] = useState(false)
@@ -277,7 +209,6 @@ export function HomePage() {
   return (
     <div className="max-w-7xl mx-auto">
       <WelcomePopup />
-      <Banner />
       {/* Header */}
       <div className="mb-6">
         <h2 className="text-lg font-bold text-ink">豆瓣高分电影</h2>
