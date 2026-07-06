@@ -221,10 +221,10 @@ export function SearchPage() {
     setActiveCat(currentCat)
   }, [currentCat])
 
-  // Favorites only toggle - default to true (show favorite sources)
+  // Favorites only toggle - default to false (show all sources)
   const [favoritesOnly, setFavoritesOnly] = useState(() => {
     const saved = localStorage.getItem('tvcc_search_favorites_only')
-    return saved === null ? true : saved === 'true'
+    return saved === null ? false : saved === 'true'
   })
 
   const toggleFavoritesOnly = () => {
