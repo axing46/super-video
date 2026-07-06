@@ -17,6 +17,7 @@ export function DetailPage() {
   const navigate = useNavigate()
   const location = useLocation()
   const [showAllSources, setShowAllSources] = useState(false)
+  const [selectedSourceKey, setSelectedSourceKey] = useState<string | null>(null)
 
   // Try to get data from navigation state first (from search results)
   const state = location.state as { item?: VodItem; allItems?: VodItem[] } | null
@@ -43,17 +44,26 @@ export function DetailPage() {
   const data = skipFetch ? stateItem! : fetchedData
   const { isFavorited, toggleFavorite } = useFavorites()
 
-  // Collect all available sources for multi-source playback, sort favorites first
+  // Deduplicate sources by sourceKey, sort favorites first
   const allSources = useMemo(() => {
     const sources = allItems.length > 1 ? allItems : (data ? [data] : [])
     if (sources.length <= 1) return sources
 
     const favoriteKeys = getFavoriteSourceKeys()
-    const currentKey = data?.sourceKey
+    const currentKey = selectedSourceKey || data?.sourceKey
 
-    // Sort: current source first, then favorites, then others
-    return [...sources].sort((a, b) => {
-      // Current source always first
+    // Deduplicate by sourceKey
+    const seen = new Set<string>()
+    const deduped: VodItem[] = []
+    for (const src of sources) {
+      if (!seen.has(src.sourceKey)) {
+        seen.add(src.sourceKey)
+        deduped.push(src)
+      }
+    }
+
+    // Sort: selected source first, then favorites, then others
+    return deduped.sort((a, b) => {
       if (a.sourceKey === currentKey) return -1
       if (b.sourceKey === currentKey) return 1
 
@@ -61,7 +71,7 @@ export function DetailPage() {
       const bFav = favoriteKeys.includes(b.sourceKey) ? 0 : 1
       return aFav - bFav
     })
-  }, [allItems, data])
+  }, [allItems, data, selectedSourceKey])
 
   if (isLoading) return <Loading />
   if (isError) return (
@@ -78,8 +88,13 @@ export function DetailPage() {
     )
   }
 
-  const sources = parsePlayUrl(data.vodPlayUrl)
-  const favorited = isFavorited(data.sourceKey, data.vodId)
+  // Get the currently selected source data
+  const currentSourceData = selectedSourceKey
+    ? allSources.find(s => s.sourceKey === selectedSourceKey) || data
+    : data
+
+  const sources = parsePlayUrl(currentSourceData.vodPlayUrl)
+  const favorited = isFavorited(currentSourceData.sourceKey, currentSourceData.vodId)
 
   return (
     <div className="max-w-3xl mx-auto animate-fade-up">
@@ -211,17 +226,13 @@ export function DetailPage() {
             {(showAllSources ? allSources : allSources.slice(0, INITIAL_SOURCES_SHOW)).map((src, idx) => {
               const favoriteKeys = getFavoriteSourceKeys()
               const isFavorite = favoriteKeys.includes(src.sourceKey)
+              const isActive = src.sourceKey === currentSourceData.sourceKey
               return (
                 <button
                   key={idx}
-                  onClick={() => {
-                    navigate(`/detail/${encodeURIComponent(src.sourceKey)}/${encodeURIComponent(src.vodId)}`, {
-                      state: { item: src, allItems: allSources },
-                      replace: true
-                    })
-                  }}
+                  onClick={() => setSelectedSourceKey(src.sourceKey)}
                   className={`px-3 py-1.5 rounded-btn text-[11px] font-medium transition-all duration-150
-                    ${src.sourceKey === data.sourceKey
+                    ${isActive
                       ? 'bg-accent/15 text-accent border border-accent/30'
                       : isFavorite
                         ? 'bg-amber-500/10 border border-amber-500/20 text-amber-400 hover:border-amber-500/40'
