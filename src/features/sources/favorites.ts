@@ -4,7 +4,7 @@ import { loadAllSources } from './storage'
 const FAVORITE_SOURCES_KEY = 'tvcc_favorite_sources'
 
 // Default favorite sources
-const DEFAULT_FAVORITES = ['iqiyizy', 'ikunzy', 'p2100']
+const DEFAULT_FAVORITES = ['iqiyizy', 'ikunzy', 'p2100', 'ruyi']
 
 export function getFavoriteSourceKeys(): string[] {
   try {
