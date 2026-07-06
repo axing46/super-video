@@ -1,8 +1,9 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Star, ChevronDown, ChevronUp, Search, X, Copy, Check } from 'lucide-react'
-import { loadMovieData, getGenres, getMoviesByGenre, type MovieItem } from './movieData'
+import { Star, ChevronDown, ChevronUp, X, Copy, Check, ExternalLink } from 'lucide-react'
+import { fetchDoubanSections, type DoubanMovie, type DoubanSection } from './douban'
 import { Loading, ErrorState } from '@/components/ui/Status'
+import { proxyImageUrl } from '@/utils/proxy'
 
 const POPUP_SHOWN_KEY = 'tvcc_popup_shown_session'
 
@@ -12,7 +13,6 @@ function WelcomePopup() {
   const [copiedQQ, setCopiedQQ] = useState(false)
 
   useEffect(() => {
-    // Use sessionStorage - clears when browser/tab closes, shows again on reopen
     const shown = sessionStorage.getItem(POPUP_SHOWN_KEY)
     if (!shown) {
       setShow(true)
@@ -35,7 +35,6 @@ function WelcomePopup() {
         setTimeout(() => setCopiedQQ(false), 1500)
       }
     } catch {
-      // Fallback
       const textarea = document.createElement('textarea')
       textarea.value = text
       document.body.appendChild(textarea)
@@ -110,64 +109,78 @@ function WelcomePopup() {
 
 const INITIAL_SHOW = 12
 
-function MovieCard({ movie, onClick }: { movie: MovieItem; onClick: () => void }) {
+function DoubanMovieCard({ movie }: { movie: DoubanMovie }) {
+  const navigate = useNavigate()
+  const [imgError, setImgError] = useState(false)
+
+  const handleClick = () => {
+    navigate(`/search?q=${encodeURIComponent(movie.title)}`)
+  }
+
   return (
     <button
-      onClick={onClick}
-      className="glass-card p-3 text-left w-full cursor-pointer hover:-translate-y-0.5 transition-transform duration-200 group"
+      onClick={handleClick}
+      className="glass-card overflow-hidden text-left w-full cursor-pointer hover:-translate-y-0.5 transition-transform duration-200 group"
     >
-      <div className="flex items-start justify-between gap-2">
-        <div className="flex-1 min-w-0">
+      <div className="flex gap-3 p-3">
+        {/* Cover image */}
+        <div className="w-[80px] h-[110px] flex-shrink-0 rounded-lg overflow-hidden bg-hair">
+          {movie.cover && !imgError ? (
+            <img
+              src={proxyImageUrl(movie.cover)}
+              alt={movie.title}
+              loading="lazy"
+              referrerPolicy="no-referrer"
+              onError={() => setImgError(true)}
+              className="w-full h-full object-cover"
+            />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center text-muted/40 text-[10px]">
+              {movie.title}
+            </div>
+          )}
+        </div>
+
+        {/* Info */}
+        <div className="flex-1 min-w-0 flex flex-col">
           <h4 className="text-[13px] font-semibold text-ink truncate group-hover:text-accent transition-colors">
             {movie.title}
           </h4>
-          <div className="flex items-center gap-2 mt-1">
-            <span className="pill text-[10px]">{movie.type}</span>
-            {movie.region && (
-              <span className="text-[11px] text-muted">{movie.region}</span>
-            )}
-          </div>
-          {movie.cast.length > 0 && (
-            <p className="text-[11px] text-muted/70 mt-1.5 truncate">
-              {movie.cast.join(' / ')}
-            </p>
+          {movie.year && (
+            <span className="text-[11px] text-muted mt-1">{movie.year}</span>
           )}
-        </div>
-        <div className="flex items-center gap-0.5 text-champagne flex-shrink-0">
-          <Star size={13} fill="#f4d28a" strokeWidth={0} />
-          <span className="text-[13px] font-bold">{movie.rating}</span>
+          {movie.genres && movie.genres.length > 0 && (
+            <div className="flex flex-wrap gap-1 mt-1.5">
+              {movie.genres.slice(0, 3).map((g) => (
+                <span key={g} className="pill text-[9px]">{g}</span>
+              ))}
+            </div>
+          )}
+          <div className="flex items-center gap-0.5 text-champagne mt-auto pt-1">
+            <Star size={12} fill="#f4d28a" strokeWidth={0} />
+            <span className="text-[12px] font-bold">{movie.rate}</span>
+          </div>
         </div>
       </div>
     </button>
   )
 }
 
-function GenreSection({
-  genre,
-  movies,
-}: {
-  genre: string
-  movies: MovieItem[]
-}) {
+function SectionRow({ section }: { section: DoubanSection }) {
   const [expanded, setExpanded] = useState(false)
-  const navigate = useNavigate()
-  const hasMore = movies.length > INITIAL_SHOW
-  const visible = expanded ? movies : movies.slice(0, INITIAL_SHOW)
-
-  const handleClick = (title: string) => {
-    navigate(`/search?q=${encodeURIComponent(title)}`)
-  }
+  const hasMore = section.movies.length > INITIAL_SHOW
+  const visible = expanded ? section.movies : section.movies.slice(0, INITIAL_SHOW)
 
   return (
     <section className="mb-6">
       <div className="flex items-center justify-between mb-3">
-        <h2 className="text-[16px] font-bold text-ink">{genre}</h2>
-        <span className="text-[11px] text-muted">{movies.length} 部</span>
+        <h2 className="text-[16px] font-bold text-ink">{section.label}</h2>
+        <span className="text-[11px] text-muted">{section.movies.length} 部</span>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
-        {visible.map((m, i) => (
-          <MovieCard key={`${m.title}-${i}`} movie={m} onClick={() => handleClick(m.title)} />
+        {visible.map((movie) => (
+          <DoubanMovieCard key={movie.id} movie={movie} />
         ))}
       </div>
 
@@ -180,7 +193,7 @@ function GenreSection({
           {expanded ? (
             <><ChevronUp size={14} /> 收起</>
           ) : (
-            <><ChevronDown size={14} /> 展开更多 ({movies.length - INITIAL_SHOW} 部)</>
+            <><ChevronDown size={14} /> 展开更多 ({section.movies.length - INITIAL_SHOW} 部)</>
           )}
         </button>
       )}
@@ -189,61 +202,50 @@ function GenreSection({
 }
 
 export function HomePage() {
-  const [movies, setMovies] = useState<MovieItem[] | null>(null)
+  const [sections, setSections] = useState<DoubanSection[]>([])
+  const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [activeGenre, setActiveGenre] = useState<string | null>(null)
-  const navigate = useNavigate()
 
   useEffect(() => {
-    loadMovieData()
-      .then(setMovies)
-      .catch((e) => setError(e.message))
+    fetchDoubanSections()
+      .then((data) => {
+        setSections(data)
+        setLoading(false)
+      })
+      .catch((e) => {
+        setError(e.message)
+        setLoading(false)
+      })
   }, [])
 
   if (error) return <ErrorState message={error} onRetry={() => window.location.reload()} />
-  if (!movies) return <Loading message="加载豆瓣电影数据..." />
-
-  const genres = getGenres(movies)
-  const filtered = activeGenre ? getMoviesByGenre(movies, activeGenre) : movies
+  if (loading) return <Loading message="加载豆瓣电影数据..." />
 
   return (
     <div className="max-w-7xl mx-auto">
       <WelcomePopup />
+
       {/* Header */}
-      <div className="mb-6">
-        <h2 className="text-lg font-bold text-ink">豆瓣高分电影</h2>
-        <p className="text-[12px] text-muted mt-1">评分 ≥ 7.5 · {movies.length} 部 </p>
-      </div>
-
-      {/* Genre tabs */}
-      <div className="flex items-center gap-1.5 mb-5 overflow-x-auto scrollbar-none pb-1">
-        <button
-          onClick={() => setActiveGenre(null)}
-          className={`pill text-[11px] cursor-pointer whitespace-nowrap transition-all duration-150
-            ${!activeGenre ? '!bg-accent/15 !border-accent/30 !text-accent' : 'hover:border-white/20'}`}
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h2 className="text-lg font-bold text-ink">豆瓣热门推荐</h2>
+          <p className="text-[12px] text-muted mt-1">数据来源：豆瓣电影</p>
+        </div>
+        <a
+          href="https://movie.douban.com/"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex items-center gap-1 text-[12px] text-muted hover:text-accent transition-colors"
         >
-          全部 ({movies.length})
-        </button>
-        {genres.map((g) => (
-          <button
-            key={g}
-            onClick={() => setActiveGenre(g === activeGenre ? null : g)}
-            className={`pill text-[11px] cursor-pointer whitespace-nowrap transition-all duration-150
-              ${g === activeGenre ? '!bg-accent/15 !border-accent/30 !text-accent' : 'hover:border-white/20'}`}
-          >
-            {g}
-          </button>
-        ))}
+          <ExternalLink size={12} />
+          豆瓣
+        </a>
       </div>
 
-      {/* Movie list */}
-      {activeGenre ? (
-        <GenreSection genre={activeGenre} movies={filtered as MovieItem[]} />
-      ) : (
-        genres.map((genre) => (
-          <GenreSection key={genre} genre={genre} movies={getMoviesByGenre(movies, genre, 50)} />
-        ))
-      )}
+      {/* Sections */}
+      {sections.map((section) => (
+        <SectionRow key={section.label} section={section} />
+      ))}
     </div>
   )
 }
