@@ -308,9 +308,6 @@ export function SearchPage() {
     if (q) setParams({ q, cat: cat === 'all' ? undefined : cat } as Record<string, string>)
   }
 
-  // Streaming state
-  const { isStreaming } = useSearch(queryParam || '')
-
   return (
     <div className="max-w-7xl mx-auto">
 
