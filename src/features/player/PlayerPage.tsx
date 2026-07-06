@@ -903,7 +903,7 @@ function VideoPlayer({
         </div>
       )}
 
-      {/* Mobile fullscreen back button */}
+      {/* Mobile/tablet fullscreen back button — returns to detail page */}
       {isFullscreen && (
         <button
           onClick={() => {
@@ -911,13 +911,11 @@ function VideoPlayer({
             if (document.fullscreenElement || doc.webkitFullscreenElement) {
               if (doc.exitFullscreen) doc.exitFullscreen()
               else if (doc.webkitExitFullscreen) doc.webkitExitFullscreen()
-            } else {
-              const savedQuery = sessionStorage.getItem('sv_search_query')
-              navigate(savedQuery ? `/search?q=${encodeURIComponent(savedQuery)}` : '/search', { replace: true })
             }
+            navigate(`/detail/${encodeURIComponent(sourceKey)}/${encodeURIComponent(vodId)}`, { replace: true })
           }}
           className="absolute top-3 left-3 z-20 p-2 rounded-full bg-black/50 backdrop-blur-sm
-            text-white/80 hover:text-white hover:bg-black/70 transition-all duration-200 sm:hidden"
+            text-white/80 hover:text-white hover:bg-black/70 transition-all duration-200 md:hidden"
         >
           <ArrowLeft size={20} strokeWidth={1.5} />
         </button>
