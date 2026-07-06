@@ -223,6 +223,7 @@ function VideoPlayer({
   const containerRef = useRef<HTMLDivElement>(null)
   const hlsRef = useRef<Hls | null>(null)
   const retryCountRef = useRef(0)
+  const hasProgressRef = useRef(false)
   const MAX_RETRIES = 3
   const [playing, setPlaying] = useState(false)
   const [muted, setMuted] = useState(true)
@@ -269,6 +270,7 @@ function VideoPlayer({
     setPlayerStatus('正在连接...')
     setShowLoadingTip(false)
     retryCountRef.current = 0
+    hasProgressRef.current = false
 
     // Set default volume — start muted for autoplay policy
     video.volume = 1
@@ -280,6 +282,16 @@ function VideoPlayer({
 
     const proxyUrl = proxy(url)
     console.log('[player] Loading:', proxyUrl)
+
+    // Safety timeout — if no progress after 15s, show error with retry
+    const loadingTimeout = setTimeout(() => {
+      if (destroyed || hasProgressRef.current) return
+      console.warn('[player] Loading timeout — no progress after 15s')
+      if (!destroyed) {
+        setPlayerError('加载超时，请检查网络后重试')
+        setPlayerStatus('')
+      }
+    }, 15000)
 
     const tryPlay = () => {
       if (destroyed) return
@@ -332,6 +344,7 @@ function VideoPlayer({
       hls.on(Hls.Events.MANIFEST_PARSED, () => {
         if (destroyed) return
         retryCountRef.current = 0
+        hasProgressRef.current = true
         setPlayerError(null)
         setPlayerStatus('')
 
@@ -371,6 +384,25 @@ function VideoPlayer({
 
       hls.on(Hls.Events.ERROR, (_event, data) => {
         if (destroyed) return
+
+        // Handle non-fatal buffer stalls (common on mobile)
+        if (!data.fatal && data.type === Hls.ErrorTypes.MEDIA_ERROR) {
+          console.warn('[player] Non-fatal media error:', data.details)
+          if (data.details === 'bufferStalledError' || data.details === 'bufferNudgeOnStall') {
+            // Nudge playback forward to recover from stall
+            try {
+              const currentTime = video.currentTime
+              if (video.buffered.length > 0) {
+                const bufferedEnd = video.buffered.end(video.buffered.length - 1)
+                if (bufferedEnd - currentTime > 0.5) {
+                  video.currentTime = bufferedEnd - 0.1
+                }
+              }
+            } catch {}
+          }
+          return
+        }
+
         if (data.fatal) {
           // Try recovery for media errors first
           if (data.type === Hls.ErrorTypes.MEDIA_ERROR && retryCountRef.current < MAX_RETRIES) {
@@ -431,36 +463,51 @@ function VideoPlayer({
         retryCountRef.current = 0
       })
     } else if (isM3u8) {
-      // Native HLS (iOS Safari) — set src and try to play
+      // Native HLS (iOS Safari / hls.js not supported)
       video.src = proxyUrl
-      video.addEventListener('loadedmetadata', () => tryPlay(), { once: true })
-      video.addEventListener('canplay', () => {
-        if (!destroyed) {
-          setPlayerStatus('')
-          retryCountRef.current = 0
-        }
-      }, { once: true })
+      video.load()
+
+      const onNativeReady = () => {
+        if (destroyed) return
+        hasProgressRef.current = true
+        retryCountRef.current = 0
+        setPlayerStatus('')
+        tryPlay()
+      }
+      video.addEventListener('loadedmetadata', onNativeReady, { once: true })
+      video.addEventListener('canplay', onNativeReady, { once: true })
+
       video.addEventListener('error', () => {
         if (destroyed) return
         if (retryCountRef.current < MAX_RETRIES) {
           retryLoad()
         } else {
           setPlayerError('视频加载失败，请尝试切换其他片源')
+          setPlayerStatus('')
         }
       })
       tryPlay()
     } else {
-      // Direct video URL
+      // Direct video URL (MP4, etc.)
       video.src = proxyUrl
-      video.addEventListener('canplay', () => {
-        if (!destroyed) setPlayerStatus('')
-      }, { once: true })
+      video.load()
+
+      const onDirectReady = () => {
+        if (destroyed) return
+        hasProgressRef.current = true
+        setPlayerStatus('')
+        tryPlay()
+      }
+      video.addEventListener('loadedmetadata', onDirectReady, { once: true })
+      video.addEventListener('canplay', onDirectReady, { once: true })
+
       video.addEventListener('error', () => {
         if (destroyed) return
         if (retryCountRef.current < MAX_RETRIES) {
           retryLoad()
         } else {
           setPlayerError('视频加载失败，请尝试切换其他片源')
+          setPlayerStatus('')
         }
       })
       tryPlay()
@@ -477,6 +524,17 @@ function VideoPlayer({
     const onPlaying = () => {
       if (!destroyed) setPlayerStatus('')
     }
+    const onLoadedData = () => {
+      if (!destroyed) {
+        hasProgressRef.current = true
+        setPlayerStatus('')
+      }
+    }
+    const onProgress = () => {
+      if (!destroyed && video.buffered.length > 0) {
+        hasProgressRef.current = true
+      }
+    }
 
     video.addEventListener('timeupdate', onTime)
     video.addEventListener('loadedmetadata', onDuration)
@@ -485,9 +543,12 @@ function VideoPlayer({
     video.addEventListener('ended', onEnded)
     video.addEventListener('waiting', onWaiting)
     video.addEventListener('playing', onPlaying)
+    video.addEventListener('loadeddata', onLoadedData)
+    video.addEventListener('progress', onProgress)
 
     return () => {
       destroyed = true
+      clearTimeout(loadingTimeout)
       video.removeEventListener('timeupdate', onTime)
       video.removeEventListener('loadedmetadata', onDuration)
       video.removeEventListener('play', onPlay)
@@ -495,6 +556,8 @@ function VideoPlayer({
       video.removeEventListener('ended', onEnded)
       video.removeEventListener('waiting', onWaiting)
       video.removeEventListener('playing', onPlaying)
+      video.removeEventListener('loadeddata', onLoadedData)
+      video.removeEventListener('progress', onProgress)
       // Proper HLS teardown
       if (hls) {
         hls.stopLoad()
@@ -848,10 +911,18 @@ function VideoPlayer({
               onClick={() => {
                 setPlayerError(null)
                 retryCountRef.current = 0
-                if (videoRef.current) {
+                hasProgressRef.current = false
+                const hls = hlsRef.current
+                if (hls) {
+                  // Re-initialize HLS
+                  hls.stopLoad()
+                  hls.startLoad()
+                  setPlayerStatus('正在重新连接...')
+                } else if (videoRef.current) {
                   videoRef.current.src = proxy(url)
                   videoRef.current.load()
                   videoRef.current.play().catch(() => {})
+                  setPlayerStatus('正在重新连接...')
                 }
               }}
               className="px-4 py-2 rounded-btn border border-white/10 text-[13px] text-ink-2

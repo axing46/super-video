@@ -5,10 +5,15 @@
  * No raw http/https modules needed.
  */
 
-function isM3u8Content(url, contentType) {
+function isM3u8Content(url, contentType, body) {
+  // Definitive content-type matches
   if (contentType.includes('mpegurl') || contentType.includes('vnd.apple.mpegurl')) return true
-  if (contentType.includes('json') || contentType.includes('html') || contentType.includes('image') || contentType.includes('video/')) return false
+  // Definitive non-M3U8
+  if (contentType.includes('json') || contentType.includes('html') || contentType.includes('image') || contentType.includes('video/mp4') || contentType.includes('video/webm')) return false
+  // URL extension check
   if (url.toLowerCase().includes('.m3u8')) return true
+  // Body content check — M3U8 always starts with #EXTM3U
+  if (body && body.trimStart().startsWith('#EXTM3U')) return true
   return false
 }
 
@@ -56,12 +61,12 @@ async function fetchWithRetry(targetUrl, retries = 2) {
       const res = await fetch(targetUrl, {
         headers: getHeaders(targetUrl),
         redirect: 'follow',
-        signal: AbortSignal.timeout(20000),
+        signal: AbortSignal.timeout(25000),
       })
       return res
     } catch (err) {
       if (i === retries) throw err
-      await new Promise(r => setTimeout(r, 500 * (i + 1)))
+      await new Promise(r => setTimeout(r, 800 * (i + 1)))
     }
   }
 }
@@ -90,22 +95,26 @@ export default async function handler(req, res) {
     }
 
     const contentType = upstream.headers.get('content-type') ?? ''
-    const isM3u8 = isM3u8Content(targetUrl, contentType)
+
+    // Read body as text first to check for M3U8 content
+    const text = await upstream.text()
+    const isM3u8 = isM3u8Content(targetUrl, contentType, text)
 
     if (isM3u8) {
-      let text = await upstream.text()
-      text = rewriteM3u8(text, targetUrl)
-      res.setHeader('Content-Type', 'application/vnd.apple.mpegurl')
-      res.setHeader('Cache-Control', 'public, max-age=30')
-      return res.send(text)
+      const rewritten = rewriteM3u8(text, targetUrl)
+      res.setHeader('Content-Type', 'application/vnd.apple.mpegurl; charset=utf-8')
+      res.setHeader('Cache-Control', 'public, max-age=10')
+      res.setHeader('Access-Control-Allow-Origin', '*')
+      return res.send(rewritten)
     }
 
-    const buffer = Buffer.from(await upstream.arrayBuffer())
+    // Non-M3U8 — send as binary (TS segments, MP4, etc.)
+    const buffer = Buffer.from(text, 'binary')
 
-    // Pass through content type, cache, and content-length
     res.setHeader('Content-Type', contentType || 'application/octet-stream')
     res.setHeader('Content-Length', buffer.length)
     res.setHeader('Cache-Control', 'public, max-age=86400')
+    res.setHeader('Access-Control-Allow-Origin', '*')
 
     return res.status(200).end(buffer)
   } catch (err) {
