@@ -9,8 +9,8 @@
   }
 
   :root {
-    /* Light Mode Palette (KVideo style) */
-    --bg-color-light: #f2f4f7;
+    /* Light Mode Palette */
+    --bg-color-light: #ffffff;
     --bg-card-light: #ffffff;
     --text-color-light: #1d1d1f;
     --text-secondary-light: #6e6e73;
