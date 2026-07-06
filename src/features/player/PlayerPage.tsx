@@ -192,6 +192,7 @@ function VideoPlayer({
   const [showControls, setShowControls] = useState(true)
   const [playerError, setPlayerError] = useState<string | null>(null)
   const [playerStatus, setPlayerStatus] = useState('正在连接...')
+  const [showLoadingTip, setShowLoadingTip] = useState(false)
   const [speed, setSpeed] = useState(1)
   const [showSpeedMenu, setShowSpeedMenu] = useState(false)
   const [levels, setLevels] = useState<{ index: number; height: number; bitrate: number; label: string }[]>([])
@@ -201,6 +202,20 @@ function VideoPlayer({
 
   const isM3u8 = url.toLowerCase().includes('.m3u8')
 
+  // Show loading tip after 5 seconds
+  useEffect(() => {
+    if (!playerStatus || playerError) {
+      setShowLoadingTip(false)
+      return
+    }
+
+    const timer = setTimeout(() => {
+      setShowLoadingTip(true)
+    }, 5000)
+
+    return () => clearTimeout(timer)
+  }, [playerStatus, playerError])
+
   // Init player
   useEffect(() => {
     const video = videoRef.current
@@ -208,6 +223,7 @@ function VideoPlayer({
 
     setPlayerError(null)
     setPlayerStatus('正在连接...')
+    setShowLoadingTip(false)
 
     // Set default volume
     video.volume = 1
@@ -226,11 +242,12 @@ function VideoPlayer({
         lowLatencyMode: false,
         debug: false,
         // ABR: prefer higher quality
-        abrEwmaDefaultEstimate: 5_000_000, // Assume 5Mbps initially (not 500kbps)
+        abrEwmaDefaultEstimate: 8_000_000, // Assume 8Mbps initially for better quality
         abrBandWidthFactor: 0.95,
         abrBandWidthUpFactor: 0.7,
         maxBufferLength: 30,
         maxMaxBufferLength: 60,
+        startLevel: -1, // Auto start level
       })
       hlsRef.current = hls
 
@@ -689,12 +706,43 @@ function VideoPlayer({
 
       {/* Status overlay */}
       {playerStatus && !playerError && (
-        <div className="absolute inset-0 z-10 flex items-center justify-center bg-black/60">
+        <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-black/60">
           <div className="flex flex-col items-center gap-3">
             <div className="w-8 h-8 border-2 border-accent/40 border-t-accent rounded-full animate-spin" />
             <span className="text-[13px] text-white/70">{playerStatus}</span>
           </div>
+          {/* Loading tip after 5 seconds */}
+          {showLoadingTip && (
+            <button
+              onClick={() => {
+                const savedQuery = sessionStorage.getItem('sv_search_query')
+                navigate(savedQuery ? `/search?q=${encodeURIComponent(savedQuery)}` : '/search', { replace: true })
+              }}
+              className="mt-4 px-4 py-2 rounded-btn bg-white/10 border border-white/20 text-[12px] text-white/80
+                hover:bg-white/20 transition-all duration-200 animate-fade-up"
+            >
+              请耐心等待哦，若长时间无法加载，请点击返回更换片源
+            </button>
+          )}
         </div>
+      )}
+
+      {/* Mobile fullscreen back button */}
+      {isFullscreen && (
+        <button
+          onClick={() => {
+            if (document.fullscreenElement) {
+              document.exitFullscreen()
+            } else {
+              const savedQuery = sessionStorage.getItem('sv_search_query')
+              navigate(savedQuery ? `/search?q=${encodeURIComponent(savedQuery)}` : '/search', { replace: true })
+            }
+          }}
+          className="absolute top-3 left-3 z-20 p-2 rounded-full bg-black/50 backdrop-blur-sm
+            text-white/80 hover:text-white hover:bg-black/70 transition-all duration-200 sm:hidden"
+        >
+          <ArrowLeft size={20} strokeWidth={1.5} />
+        </button>
       )}
 
       {/* 2x speed hint */}
