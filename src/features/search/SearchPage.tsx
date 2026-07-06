@@ -233,7 +233,7 @@ export function SearchPage() {
     localStorage.setItem('tvcc_search_favorites_only', String(newValue))
   }
 
-  const { data, isLoading, isError, error, refetch } = useSearch(keyword, favoritesOnly)
+  const { data, isLoading, isError, error, refetch, isStreaming, searchProgress } = useSearch(keyword, favoritesOnly)
   const { addHistory } = useSearchStore()
 
   // Filter results by selected category
@@ -452,14 +452,29 @@ export function SearchPage() {
         <VodGrid items={[]} loading />
       ) : (
         <>
+          {/* Search progress indicator */}
+          {searchProgress && searchProgress.total > 0 && (
+            <div className="flex items-center justify-center gap-2 mb-4 py-2 px-4 rounded-lg bg-accent/5 border border-accent/10">
+              <Loader2 size={14} className="animate-spin text-accent" />
+              <span className="text-[12px] text-accent font-medium">
+                正在搜索 {searchProgress.searched}/{searchProgress.total} 个片源
+              </span>
+              <div className="flex-1 max-w-[100px] h-1.5 bg-white/10 rounded-full overflow-hidden">
+                <div
+                  className="h-full bg-accent rounded-full transition-all duration-300"
+                  style={{ width: `${(searchProgress.searched / searchProgress.total) * 100}%` }}
+                />
+              </div>
+            </div>
+          )}
           {/* Streaming indicator */}
-          {isStreaming && finalItems.length > 0 && (
+          {isStreaming && !searchProgress && finalItems.length > 0 && (
             <div className="flex items-center justify-center gap-2 mb-4 py-2 text-[12px] text-muted">
               <Loader2 size={14} className="animate-spin" />
               正在加载更多结果...
             </div>
           )}
-          <VodGrid items={finalItems} />
+          <VodGrid items={finalItems} mergeDuplicates />
         </>
       )}
 

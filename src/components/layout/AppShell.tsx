@@ -1,7 +1,8 @@
 import { type ReactNode, useState } from 'react'
 import { NavLink } from 'react-router-dom'
-import { Home, Search, History, Heart, Settings, Tv, Menu, X } from 'lucide-react'
+import { Home, Search, History, Heart, Settings, Tv, Menu, X, Sun, Moon } from 'lucide-react'
 import { SearchBar } from './SearchBar'
+import { useTheme } from '@/hooks/useTheme'
 
 const NAV = [
   { to: '/', icon: Home, label: '首页' },
@@ -13,6 +14,7 @@ const NAV = [
 
 export function AppShell({ children, hideNav }: { children: ReactNode; hideNav?: boolean }) {
   const [drawerOpen, setDrawerOpen] = useState(false)
+  const { toggleTheme, isDark } = useTheme()
 
   if (hideNav) {
     return <main className="min-h-screen bg-bg">{children}</main>
@@ -86,6 +88,14 @@ export function AppShell({ children, hideNav }: { children: ReactNode; hideNav?:
               <div className="w-[180px] sm:w-[240px] lg:w-[280px] hidden sm:block">
                 <SearchBar compact />
               </div>
+              {/* Theme toggle */}
+              <button
+                onClick={toggleTheme}
+                className="icon-btn w-8 h-8"
+                title={isDark ? '切换到白天模式' : '切换到夜间模式'}
+              >
+                {isDark ? <Sun size={14} strokeWidth={1.5} /> : <Moon size={14} strokeWidth={1.5} />}
+              </button>
               {/* Mobile nav icons (phone only) */}
               <div className="flex sm:hidden items-center gap-0.5">
                 {NAV.filter(n => n.to === '/' || n.to === '/search' || n.to === '/favorites').map(({ to, icon: Icon, label }) => (

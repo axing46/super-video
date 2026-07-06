@@ -176,6 +176,8 @@ export interface SearchAllResult {
   items: VodItem[]
   sourceCount: number
   errorCount: number
+  searchedCount?: number
+  totalSources?: number
 }
 
 // Calculate relevance score for search results
@@ -270,6 +272,7 @@ export async function searchAllSources(
   keyword: string,
   cache: SearchCache,
   onBatch?: (items: VodItem[]) => void,
+  onProgress?: (searched: number, total: number) => void,
   fastOnly = false,
   favoritesOnly = false,
 ): Promise<SearchAllResult> {
@@ -293,8 +296,10 @@ export async function searchAllSources(
     sources = sources.slice(0, FAST_SOURCE_COUNT)
   }
 
+  const totalSources = sources.length
   const allItems: VodItem[] = []
   let errorCount = 0
+  let searchedCount = 0
 
   // Streaming: process sources as they complete
   const promises = sources.map(async (source) => {
@@ -308,6 +313,8 @@ export async function searchAllSources(
           if (pageCached) batch.push(...pageCached)
         }
         recordSourcePerformance(source.key, 10, true)
+        searchedCount++
+        onProgress?.(searchedCount, totalSources)
         return batch
       }
 
@@ -315,7 +322,11 @@ export async function searchAllSources(
       const responseTime = Date.now() - startTime
       recordSourcePerformance(source.key, responseTime, true)
       cache.set(source.key, query, 1, page1)
-      if (page1.length === 0) return []
+      if (page1.length === 0) {
+        searchedCount++
+        onProgress?.(searchedCount, totalSources)
+        return []
+      }
 
       const results = [...page1]
       const extraPages = await Promise.allSettled(
@@ -329,11 +340,15 @@ export async function searchAllSources(
       for (const result of extraPages) {
         if (result.status === 'fulfilled') results.push(...result.value)
       }
+      searchedCount++
+      onProgress?.(searchedCount, totalSources)
       return results
     } catch {
       const responseTime = Date.now() - startTime
       recordSourcePerformance(source.key, responseTime, false)
       errorCount++
+      searchedCount++
+      onProgress?.(searchedCount, totalSources)
       return []
     }
   })

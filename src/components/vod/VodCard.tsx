@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Star, Film, Play } from 'lucide-react'
+import { Star, Film, Play, Layers } from 'lucide-react'
 import type { VodItem } from '@/core/models'
 import { proxyImageUrl } from '@/utils/proxy'
 import { getSourceDisplayName } from '@/utils/source-names'
@@ -9,9 +9,11 @@ interface VodCardProps {
   item: VodItem
   /** 'poster' = vertical card, 'landscape' = YouTube-style horizontal card */
   layout?: 'poster' | 'landscape'
+  /** Number of sources with same name */
+  sourceCount?: number
 }
 
-export function VodCard({ item, layout = 'landscape' }: VodCardProps) {
+export function VodCard({ item, layout = 'landscape', sourceCount }: VodCardProps) {
   const [imgError, setImgError] = useState(false)
 
   if (layout === 'landscape') {
@@ -46,7 +48,12 @@ export function VodCard({ item, layout = 'landscape' }: VodCardProps) {
             {/* Badges */}
             <div className="absolute top-0.5 left-0.5 right-0.5 sm:top-1 sm:left-1 sm:right-1 z-10 flex items-center justify-between gap-0.5">
               <div className="flex items-center gap-0.5 min-w-0">
-                {item.sourceKey && (
+                {sourceCount && sourceCount > 1 ? (
+                  <span className="flex items-center gap-0.5 pill max-w-[60%] truncate !bg-purple-500/80 !text-white !border-purple-400/50 text-[7px] sm:text-[8px] px-1 py-0.5 sm:px-1.5">
+                    <Layers size={8} />
+                    {sourceCount}个源
+                  </span>
+                ) : item.sourceKey && (
                   <span className="pill max-w-[50%] truncate !bg-accent !text-white !border-accent text-[7px] sm:text-[8px] px-1 py-0.5 sm:px-1.5">
                     {getSourceDisplayName(item.sourceKey)}
                   </span>

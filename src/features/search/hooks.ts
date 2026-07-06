@@ -28,17 +28,20 @@ export function useSearch(keyword: string, favoritesOnly = false) {
   const queryClient = useQueryClient()
   const [streamingItems, setStreamingItems] = useState<SearchAllResult | null>(null)
   const [isStreaming, setIsStreaming] = useState(false)
+  const [searchProgress, setSearchProgress] = useState<{ searched: number; total: number } | null>(null)
 
   // Streaming search
   useEffect(() => {
     if (!debounced.trim()) {
       setStreamingItems(null)
+      setSearchProgress(null)
       return
     }
 
     let cancelled = false
     setIsStreaming(true)
     setStreamingItems(null)
+    setSearchProgress(null)
 
     const streamSearch = async () => {
       await searchAllSources(
@@ -52,10 +55,17 @@ export function useSearch(keyword: string, favoritesOnly = false) {
             errorCount: prev?.errorCount ?? 0,
           }))
         },
+        (searched, total) => {
+          if (cancelled) return
+          setSearchProgress({ searched, total })
+        },
         true, // fastOnly mode for initial results
         favoritesOnly,
       )
-      if (!cancelled) setIsStreaming(false)
+      if (!cancelled) {
+        setIsStreaming(false)
+        setSearchProgress(null)
+      }
     }
 
     streamSearch()
@@ -87,5 +97,6 @@ export function useSearch(keyword: string, favoritesOnly = false) {
     ...query,
     data,
     isStreaming,
+    searchProgress,
   }
 }
